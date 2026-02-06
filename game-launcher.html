@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Hệ Thống Multi-Game</title>
+    <style>
+        /* ===== BASE STYLES ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0a1628;
+            color: white;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ===== HAMBURGER MENU ===== */
+        .hamburger-menu {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+        }
+
+        .hamburger-btn {
+            background: #12253d;
+            border: 2px solid #88ccff;
+            border-radius: 8px;
+            color: #88ccff;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 8px 12px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-btn:hover {
+            background: #88ccff;
+            color: #0a1628;
+            transform: scale(1.05);
+        }
+
+        /* ===== GAME SELECTOR ===== */
+        .game-selector {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .game-selector.hidden { display: none; }
+
+        .game-selector-content {
+            background: #12253d;
+            border: 2px solid #88ccff;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .game-selector-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #3a5a7c;
+        }
+
+        .game-selector-header h3 {
+            color: #88ccff;
+            font-size: 20px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #ff6b6b;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .close-btn:hover { background: rgba(255, 107, 107, 0.2); }
+
+        .game-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .game-btn {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: #0a1628;
+            border: 2px solid #3a5a7c;
+            border-radius: 12px;
+            padding: 16px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .game-btn:hover {
+            border-color: #88ccff;
+            background: rgba(136, 204, 255, 0.1);
+        }
+
+        .game-btn.active {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .game-icon { font-size: 24px; }
+        .game-title { font-size: 16px; color: #88ccff; margin-bottom: 4px; }
+        .game-desc { font-size: 12px; color: #aaa; }
+
+        /* ===== GAME AREA ===== */
+        .game-area {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* ===== LOADING ===== */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #0a1628;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 998;
+        }
+
+        .loading-screen.hidden { display: none; }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #3a5a7c;
+            border-top-color: #88ccff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #88ccff;
+            font-size: 16px;
+        }
+
+        /* ===== ERROR DISPLAY ===== */
+        .error-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #0a1628;
+            color: #ff6b6b;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .error-icon { font-size: 48px; margin-bottom: 20px; }
+        .error-title { font-size: 24px; margin-bottom: 10px; }
+        .error-message { margin-bottom: 20px; max-width: 400px; }
+
+        .retry-btn {
+            background: #88ccff;
+            color: #0a1628;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- HAMBURGER MENU -->
+    <div class="hamburger-menu">
+        <button id="hamburger-btn" class="hamburger-btn">☰</button>
+    </div>
+
+    <!-- GAME SELECTOR OVERLAY -->
+    <div id="game-selector" class="game-selector hidden">
+        <div class="game-selector-content">
+            <div class="game-selector-header">
+                <h3>✨ CHỌN GAME</h3>
+                <button id="close-selector" class="close-btn">✖</button>
+            </div>
+            <div class="game-list">
+                <button class="game-btn active" data-game="toan-so">
+                    <span class="game-icon">🖐️</span>
+                    <div>
+                        <div class="game-title">Toán Số</div>
+                        <div class="game-desc">Luyện tính nhẩm</div>
+                    </div>
+                </button>
+                
+                <button class="game-btn" data-game="toan-choi">
+                    <span class="game-icon">🚀</span>
+                    <div>
+                        <div class="game-title">Toán Chơi</div>
+                        <div class="game-desc">Asteroid Miner</div>
+                    </div>
+                </button>
+                
+                <button class="game-btn" data-game="tu-tien">
+                    <span class="game-icon">⚔️</span>
+                    <div>
+                        <div class="game-title">Tu Tiên</div>
+                        <div class="game-desc">Thiên Đạo Đại Chiến</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN GAME AREA -->
+    <div id="game-area" class="game-area">
+        <!-- Games will be loaded here -->
+    </div>
+
+    <!-- LOADING SCREEN -->
+    <div id="loading-screen" class="loading-screen hidden">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Đang tải game...</div>
+    </div>
+
+    <script>
+        // ===== SIMPLE GAME LOADER =====
+        class SimpleGameApp {
+            constructor() {
+                this.currentGame = null;
+                this.currentGameType = null;
+                this.isLoading = false;
+            }
+
+            init() {
+                console.log('🎮 Starting Simple Game App...');
+                this.initEvents();
+                this.loadDefaultGame();
+            }
+
+            initEvents() {
+                // Hamburger menu
+                document.getElementById('hamburger-btn').addEventListener('click', () => {
+                    document.getElementById('game-selector').classList.toggle('hidden');
+                });
+
+                // Close selector
+                document.getElementById('close-selector').addEventListener('click', () => {
+                    document.getElementById('game-selector').classList.add('hidden');
+                });
+
+                // Game buttons
+                document.querySelectorAll('.game-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.loadGame(btn.dataset.game);
+                        document.getElementById('game-selector').classList.add('hidden');
+                    });
+                });
+            }
+
+            async loadDefaultGame() {
+                console.log('Loading default game: Toán Số');
+                await this.loadGame('toan-so');
+            }
+
+            async loadGame(gameType) {
+                if (this.isLoading || this.currentGameType === gameType) return;
+
+                this.isLoading = true;
+                this.showLoading();
+
+                try {
+                    // Destroy current game
+                    this.destroyCurrentGame();
+
+                    // Load game script if needed
+                    await this.loadGameScript(gameType);
+
+                    // Initialize new game
+                    const GameModule = this.getGameModule(gameType);
+                    if (!GameModule) {
+                        throw new Error(`Game module ${gameType} not found`);
+                    }
+
+                    this.currentGame = GameModule.init();
+                    this.currentGameType = gameType;
+                    
+                    this.updateActiveButton(gameType);
+                    console.log(`✅ Game ${gameType} loaded successfully`);
+
+                } catch (error) {
+                    console.error(`❌ Failed to load game ${gameType}:`, error);
+                    this.showError(`Không thể tải game ${gameType}`, error.message);
+                } finally {
+                    this.isLoading = false;
+                    this.hideLoading();
+                }
+            }
+
+            destroyCurrentGame() {
+                if (this.currentGame && this.currentGame.destroy) {
+                    this.currentGame.destroy();
+                }
+                
+                const gameArea = document.getElementById('game-area');
+                if (gameArea) gameArea.innerHTML = '';
+                
+                this.currentGame = null;
+                this.currentGameType = null;
+            }
+
+            async loadGameScript(gameType) {
+                // Check if already loaded
+                if (this.getGameModule(gameType)) return;
+
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = `games/${gameType}.js`;
+                    script.onload = resolve;
+                    script.onerror = () => reject(new Error(`Script load failed: ${gameType}.js`));
+                    document.head.appendChild(script);
+                });
+            }
+
+            getGameModule(gameType) {
+                switch (gameType) {
+                    case 'toan-so': return window.ToanSoGame;
+                    case 'toan-choi': return window.ToanChoiGame;
+                    case 'tu-tien': return window.TuTienGame;
+                    default: return null;
+                }
+            }
+
+            updateActiveButton(gameType) {
+                document.querySelectorAll('.game-btn').forEach(btn => btn.classList.remove('active'));
+                const activeBtn = document.querySelector(`[data-game="${gameType}"]`);
+                if (activeBtn) activeBtn.classList.add('active');
+            }
+
+            showLoading() {
+                document.getElementById('loading-screen').classList.remove('hidden');
+            }
+
+            hideLoading() {
+                document.getElementById('loading-screen').classList.add('hidden');
+            }
+
+            showError(title, message) {
+                const gameArea = document.getElementById('game-area');
+                gameArea.innerHTML = `
+                    <div class="error-screen">
+                        <div class="error-icon">⚠️</div>
+                        <div class="error-title">${title}</div>
+                        <div class="error-message">${message}</div>
+                        <button class="retry-btn" onclick="location.reload()">🔄 Tải lại trang</button>
+                    </div>
+                `;
+            }
+        }
+
+        // ===== START APP =====
+        const app = new SimpleGameApp();
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                app.init();
+            } catch (error) {
+                console.error('Failed to start app:', error);
+                alert('Không thể khởi động ứng dụng!');
+            }
+        });
+
+        // Global reference for debugging
+        window.app = app;
+    </script>
+</body>
+</html>

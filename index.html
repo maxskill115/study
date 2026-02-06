@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finger Math - Luyện Tính Nhẩm</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- AUDIO SYSTEM -->
+    <audio id="correct-sound" preload="auto">
+        <source src="music/correct.mp3" type="audio/mpeg">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQe" type="audio/wav">
+    </audio>
+    <audio id="wrong-sound" preload="auto">
+        <source src="music/wrong.mp3" type="audio/mpeg">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQe" type="audio/wav">
+    </audio>
+    <audio id="bg-music" preload="auto" loop>
+        <source src="music/nhacnen.mp3" type="audio/mpeg">
+    </audio>
+    
+    <style>
+        /* TLBB Enhanced Menu Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; backdrop-filter: blur(0px); }
+            to { opacity: 1; backdrop-filter: blur(15px); }
+        }
+        
+
+        
+
+    </style>
+</head>
+<body>
+    <!-- ENHANCED HAMBURGER MENU FOR GAME SWITCHING -->
+    <div id="game-menu" style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        background: linear-gradient(135deg, rgba(0, 30, 60, 0.95), rgba(0, 20, 40, 0.9));
+        border: 2px solid #88ccff;
+        border-radius: 12px;
+        padding: 12px 16px;
+        cursor: pointer;
+        color: #88ccff;
+        font-size: 20px;
+        backdrop-filter: blur(15px);
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        box-shadow: 
+            0 0 20px rgba(136, 204, 255, 0.3),
+            inset 0 0 15px rgba(136, 204, 255, 0.05);
+        font-weight: bold;
+        text-shadow: 0 0 10px #88ccff;
+        user-select: none;
+    " onclick="showGameSelector()" title="Trạm Điều Khiển - Chọn Game"
+    onmouseover="
+        this.style.transform = 'scale(1.1) rotate(90deg)';
+        this.style.boxShadow = '0 0 30px rgba(136, 204, 255, 0.6), inset 0 0 20px rgba(136, 204, 255, 0.1)';
+        this.style.borderColor = '#ffdd88';
+        this.style.color = '#ffdd88';
+    "
+    onmouseout="
+        this.style.transform = 'scale(1) rotate(0deg)';
+        this.style.boxShadow = '0 0 20px rgba(136, 204, 255, 0.3), inset 0 0 15px rgba(136, 204, 255, 0.05)';
+        this.style.borderColor = '#88ccff';
+        this.style.color = '#88ccff';
+    "
+    onmousedown="this.style.transform = 'scale(0.95) rotate(90deg)'"
+    onmouseup="this.style.transform = 'scale(1.1) rotate(90deg)'">
+        ☰
+    </div>
+
+    <!-- GAME SELECTOR OVERLAY -->
+    <!-- ENHANCED TLBB STYLE GAME SELECTOR OVERLAY -->
+    <div id="game-selector-overlay" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(0, 20, 40, 0.9));
+        z-index: 10000;
+        display: none;
+        backdrop-filter: blur(15px);
+        animation: fadeIn 0.5s ease-out;
+    " onclick="hideGameSelector()">
+        <div style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #0a1a2a 0%, #1a2a3a 50%, #0a1a2a 100%);
+            border: 3px solid #88ccff;
+            border-radius: 25px;
+            padding: 40px 35px;
+            text-align: center;
+            color: #88ccff;
+            min-width: 380px;
+            max-width: 450px;
+            box-shadow: 
+                0 0 50px rgba(136, 204, 255, 0.4),
+                inset 0 0 30px rgba(136, 204, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        " onclick="event.stopPropagation()">
+            
+            <!-- Decorative Header -->
+            <div style="
+                background: linear-gradient(90deg, transparent, #88ccff, transparent);
+                height: 2px;
+                width: 80%;
+                margin: 0 auto 20px auto;
+                opacity: 0.6;
+            "></div>
+            
+            <h2 style="
+                color: #88ccff; 
+                margin-bottom: 25px;
+                font-size: 28px;
+                text-shadow: 0 0 20px #88ccff;
+                font-weight: bold;
+            ">🌟 TRẠM ĐIỀU KHIỂN</h2>
+            
+            <p style="
+                color: #888;
+                margin-bottom: 30px;
+                font-size: 14px;
+            ">Chọn nhiệm vụ để tiếp tục hành trình</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <button onclick="window.location.href='./main.html'" class="game-nav-btn" style="
+                    background: linear-gradient(135deg, rgba(136, 204, 255, 0.2), rgba(100, 180, 255, 0.1));
+                    border: 2px solid #88ccff;
+                    color: #88ccff;
+                    padding: 15px 20px;
+                    border-radius: 15px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    font-weight: bold;
+                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                    position: relative;
+                    overflow: hidden;
+                    text-shadow: 0 0 10px rgba(136, 204, 255, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                ">
+                    <span style="font-size: 20px;">🏠</span>
+                    <span>TRẠM CHÍNH - Menu Tổng</span>
+                </button>
+                
+                <button onclick="window.location.href='./toán chơi.html'" class="game-nav-btn" style="
+                    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 180, 0, 0.1));
+                    border: 2px solid #ffdd88;
+                    color: #ffdd88;
+                    padding: 15px 20px;
+                    border-radius: 15px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    font-weight: bold;
+                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                    position: relative;
+                    overflow: hidden;
+                    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                ">
+                    <span style="font-size: 20px;">🚀</span>
+                    <span>TOÁN CHƠI - Asteroid Miner</span>
+                </button>
+                
+                <button onclick="window.location.href='./tu tiên.html'" class="game-nav-btn" style="
+                    background: linear-gradient(135deg, rgba(255, 51, 51, 0.2), rgba(200, 0, 0, 0.1));
+                    border: 2px solid #ff6666;
+                    color: #ff6666;
+                    padding: 15px 20px;
+                    border-radius: 15px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    font-weight: bold;
+                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                    position: relative;
+                    overflow: hidden;
+                    text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                ">
+                    <span style="font-size: 20px;">⚔️</span>
+                    <span>TU TIÊN - Thiên Đạo RPG</span>
+                </button>
+            </div>
+            
+            <!-- Close Button -->
+            <button onclick="hideGameSelector()" style="
+                background: linear-gradient(135deg, rgba(255, 51, 51, 0.3), rgba(200, 0, 0, 0.2));
+                border: 2px solid #ff6666;
+                color: #ff6666;
+                padding: 12px 20px;
+                border-radius: 12px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+                margin-top: 25px;
+                transition: all 0.3s ease;
+                text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
+            " onmouseover="this.style.background='linear-gradient(135deg, rgba(255, 51, 51, 0.5), rgba(200, 0, 0, 0.3))'; this.style.transform='scale(1.05)'" onmouseout="this.style.background='linear-gradient(135deg, rgba(255, 51, 51, 0.3), rgba(200, 0, 0, 0.2))'; this.style.transform='scale(1)'">
+                ✖ ĐÓNG TRẠM
+            </button>
+            
+            <!-- Decorative corners -->
+            <div style="
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                width: 25px;
+                height: 25px;
+                border-top: 3px solid #88ccff;
+                border-left: 3px solid #88ccff;
+                opacity: 0.7;
+            "></div>
+            <div style="
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: 25px;
+                height: 25px;
+                border-top: 3px solid #88ccff;
+                border-right: 3px solid #88ccff;
+                opacity: 0.7;
+            "></div>
+            <div style="
+                position: absolute;
+                bottom: 10px;
+                left: 10px;
+                width: 25px;
+                height: 25px;
+                border-bottom: 3px solid #88ccff;
+                border-left: 3px solid #88ccff;
+                opacity: 0.7;
+            "></div>
+            <div style="
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+                width: 25px;
+                height: 25px;
+                border-bottom: 3px solid #88ccff;
+                border-right: 3px solid #88ccff;
+                opacity: 0.7;
+            "></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- MÀN HÌNH CHÍNH -->
+        <div id="home-screen" class="screen active">
+            <h1>🖐️ Finger Math</h1>
+            <h2>Luyện Tính Nhẩm Cho Bé</h2>
+
+            <!-- Chọn mức độ (multi-select) -->
+            <div class="settings-group">
+                <label>📊 Mức độ: <span class="hint">(có thể chọn nhiều)</span></label>
+                <div class="button-group">
+                    <button class="option-btn active" data-setting="level" data-value="unit">Hàng đơn vị</button>
+                    <button class="option-btn" data-setting="level" data-value="tens">Hàng chục</button>
+                    <button class="option-btn" data-setting="level" data-value="hundreds">Hàng trăm</button>
+                    <button class="option-btn" data-setting="level" data-value="thousands">Hàng nghìn</button>
+                </div>
+            </div>
+
+            <!-- Chọn dạng toán -->
+            <div class="settings-group">
+                <label>🎲 Dạng toán:</label>
+                <div class="button-group">
+                    <button class="option-btn active" data-setting="problemType" data-value="quick-math">⚡ Tính nhanh</button>
+                    <button class="option-btn" data-setting="problemType" data-value="find-x">🔍 Tìm X</button>
+                    <button class="option-btn" data-setting="problemType" data-value="word-problem">📖 Toán Đố</button>
+                </div>
+            </div>
+
+            <!-- Chọn độ khó (multi-select) -->
+            <div class="settings-group">
+                <label>⚡ Độ khó: <span class="hint">(có thể chọn nhiều)</span></label>
+                <div class="button-group">
+                    <button class="option-btn active" data-setting="difficulty" data-value="no-carry">Không nhớ</button>
+                    <button class="option-btn" data-setting="difficulty" data-value="carry">Có nhớ</button>
+                </div>
+            </div>
+
+            <!-- Chọn phép tính (multi-select) -->
+            <div class="settings-group">
+                <label>➕ Phép tính: <span class="hint">(có thể chọn nhiều)</span></label>
+                <div class="button-group">
+                    <button class="option-btn active" data-setting="operation" data-value="add">Cộng (+)</button>
+                    <button class="option-btn" data-setting="operation" data-value="subtract">Trừ (−)</button>
+                    <button class="option-btn" data-setting="operation" data-value="multiply">Nhân (×)</button>
+                    <button class="option-btn" data-setting="operation" data-value="divide">Chia (÷)</button>
+                </div>
+            </div>
+
+            <!-- Chọn chế độ (chỉ cho luyện tập) -->
+            <div class="settings-group">
+                <label>🎯 Chế độ luyện tập:</label>
+                <div class="button-group">
+                    <button class="option-btn active" data-setting="mode" data-value="view">Xem kết quả</button>
+                    <button class="option-btn" data-setting="mode" data-value="input">Nhập kết quả</button>
+                </div>
+            </div>
+
+            <!-- Cài đặt bài thi -->
+            <div class="settings-group exam-settings">
+                <label>📝 Số câu bài thi:</label>
+                <div class="size-controls">
+                    <button class="size-btn" data-action="exam-decrease">−</button>
+                    <span id="exam-count-display">10</span>
+                    <button class="size-btn" data-action="exam-increase">+</button>
+                </div>
+            </div>
+
+            <!-- 2 nút chính -->
+            <div class="main-buttons">
+                <button id="start-btn" class="primary-btn half-btn">▶️ LUYỆN TẬP</button>
+                <button id="exam-btn" class="primary-btn half-btn exam-btn-color">📝 BÀI THI</button>
+            </div>
+
+            <!-- Nút cài đặt giao diện (thu gọn) -->
+            <button id="toggle-settings-btn" class="toggle-settings-btn">⚙️ Cài đặt giao diện</button>
+            
+            <!-- Cài đặt giao diện (ẩn mặc định) -->
+            <div id="display-settings" class="settings-group display-settings hidden">
+                <label>🎨 Tùy chỉnh giao diện:</label>
+                <div class="setting-row">
+                    <span>Cỡ chữ:</span>
+                    <div class="size-controls">
+                        <button class="size-btn" data-action="decrease">−</button>
+                        <span id="font-size-display">100%</span>
+                        <button class="size-btn" data-action="increase">+</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <span>Màu chính:</span>
+                    <input type="color" id="primary-color" value="#88ccff">
+                </div>
+                <div class="setting-row">
+                    <span>Màu phụ:</span>
+                    <input type="color" id="secondary-color" value="#ffd700">
+                </div>
+                <div class="setting-row">
+                    <span>Màu kết quả đúng:</span>
+                    <input type="color" id="correct-color" value="#00ff88">
+                </div>
+                <div class="setting-row">
+                    <span>🔊 Âm lượng nhạc nền:</span>
+                    <div class="size-controls">
+                        <button class="size-btn" data-action="volume-decrease">−</button>
+                        <span id="volume-display">50%</span>
+                        <button class="size-btn" data-action="volume-increase">+</button>
+                    </div>
+                </div>
+                <button id="reset-settings-btn" class="reset-btn">🔄 Khôi phục mặc định</button>
+            </div>
+        </div>
+
+        <!-- MÀN HÌNH LUYỆN TẬP -->
+        <div id="practice-screen" class="screen">
+            <div class="header">
+                <button id="back-btn" class="back-btn">← Quay lại</button>
+                <div class="problem-counter">Bài số: <span id="problem-number">1</span></div>
+                <button id="toggle-highlight-btn" class="toggle-highlight-btn hidden">💡</button>
+            </div>
+
+            <div class="problem-area">
+                <!-- Hiển thị câu hỏi toán đố -->
+                <div id="word-problem-text" class="word-problem-text hidden"></div>
+                
+                <!-- Hiển thị biểu thức toán học -->
+                <div class="problem-display">
+                    <span id="num1">0</span>
+                    <span id="operator">+</span>
+                    <span id="num2">0</span>
+                    <span>=</span>
+                    <span id="answer-display">?</span>
+                </div>
+            </div>
+
+            <!-- Chế độ A: Xem kết quả -->
+            <div id="mode-view" class="mode-section">
+                <button id="show-answer-btn" class="primary-btn">XEM KẾT QUẢ</button>
+            </div>
+
+            <!-- Chế độ B: Nhập kết quả -->
+            <div id="mode-input" class="mode-section hidden">
+                <div class="input-area">
+                    <label class="input-label">Đáp án của con:</label>
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="user-answer">
+                </div>
+                <button id="check-btn" class="primary-btn">KIỂM TRA</button>
+            </div>
+
+            <!-- Khu vực phản hồi -->
+            <div id="feedback-area" class="feedback-area hidden">
+                <div id="feedback-message" class="feedback-message"></div>
+                <div id="correct-answer" class="correct-answer"></div>
+            </div>
+
+            <!-- Nút bài tiếp theo -->
+            <button id="next-btn" class="primary-btn next-btn hidden">BÀI TIẾP THEO →</button>
+        </div>
+
+        <!-- MÀN HÌNH BÀI THI - Từng câu một -->
+        <div id="exam-screen" class="screen">
+            <div class="header">
+                <button id="exam-back-btn" class="back-btn">← Quay lại</button>
+                <button id="exam-toggle-highlight-btn" class="toggle-highlight-btn" title="Bật/Tắt hiển thị đề bài">💡</button>
+                <div class="problem-counter">Câu: <span id="exam-current">1</span> / <span id="exam-total">10</span></div>
+            </div>
+
+            <div class="word-problem-text hidden" id="exam-word-problem-text"></div>
+
+            <div class="problem-area" id="exam-problem-area">
+                <div class="problem-display">
+                    <span id="exam-num1">0</span>
+                    <span id="exam-operator">+</span>
+                    <span id="exam-num2">0</span>
+                    <span>=</span>
+                    <span id="exam-answer-display">?</span>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <label class="input-label">Nhập đáp án:</label>
+                <input type="text" inputmode="numeric" pattern="[0-9-]*" id="exam-user-answer">
+            </div>
+
+            <div class="exam-nav-buttons">
+                <button id="exam-prev-btn" class="primary-btn nav-btn">← QUAY LẠI</button>
+                <button id="exam-next-btn" class="primary-btn nav-btn">TIẾP THEO →</button>
+            </div>
+        </div>
+
+        <!-- MÀN HÌNH XEM LẠI TRƯỚC KHI NỘP -->
+        <div id="review-screen" class="screen">
+            <div class="header">
+                <button id="review-back-btn" class="back-btn">← Tiếp tục làm bài</button>
+                <h2 class="review-title">📋 XEM LẠI BÀI THI</h2>
+            </div>
+
+            <div class="review-summary">
+                <div class="summary-item done">
+                    <span class="summary-label">✓ Đã làm:</span>
+                    <span id="done-count" class="summary-value">0</span>
+                </div>
+                <div class="summary-item not-done">
+                    <span class="summary-label">○ Chưa làm:</span>
+                    <span id="not-done-count" class="summary-value">0</span>
+                </div>
+            </div>
+
+            <div class="review-list" id="review-list">
+                <!-- Danh sách câu hỏi sẽ được sinh bằng JS -->
+            </div>
+
+            <button id="submit-exam-btn" class="primary-btn submit-btn">📤 NỘP BÀI THI</button>
+        </div>
+
+        <!-- MÀN HÌNH KẾT QUẢ BÀI THI -->
+        <div id="result-screen" class="screen">
+            <div class="result-container">
+                <h1 class="result-title">🎉 KẾT QUẢ BÀI THI</h1>
+                
+                <div class="result-score">
+                    <div class="score-circle">
+                        <span id="score-percent">0%</span>
+                    </div>
+                </div>
+
+                <div class="result-details">
+                    <div class="result-item correct-item">
+                        <span class="result-label">✓ Số câu đúng:</span>
+                        <span id="correct-count" class="result-value">0</span>
+                    </div>
+                    <div class="result-item incorrect-item">
+                        <span class="result-label">✗ Số câu sai:</span>
+                        <span id="incorrect-count" class="result-value">0</span>
+                    </div>
+                    <div class="result-item total-item">
+                        <span class="result-label">📊 Tổng số câu:</span>
+                        <span id="total-count" class="result-value">0</span>
+                    </div>
+                </div>
+
+                <div class="result-message excellent" id="result-message">
+                    🎉 Con đã hoàn thành bài thi!
+                </div>
+
+                <!-- Bảng chi tiết kết quả 3 cột -->
+                <div class="result-table-container">
+                    <table class="result-table">
+                        <thead>
+                            <tr>
+                                <th>Bài toán</th>
+                                <th>Đáp án</th>
+                                <th>Kết quả</th>
+                            </tr>
+                        </thead>
+                        <tbody id="result-table-body">
+                            <!-- Sẽ được sinh bằng JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <button id="home-btn" class="primary-btn">🏠 VỀ TRANG CHỦ</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Enhanced Game Selector Functions with Beautiful Animations
+        function showGameSelector() {
+            const overlay = document.getElementById('game-selector-overlay');
+            const panel = overlay.querySelector('div');
+            
+            overlay.style.display = 'block';
+            overlay.style.opacity = '0';
+            
+            if (panel) {
+                panel.style.transform = 'translate(-50%, -50%) scale(0.8) rotateY(-15deg)';
+                panel.style.opacity = '0';
+            }
+            
+            // Animate in
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+                overlay.style.transition = 'opacity 0.4s ease-out';
+                
+                if (panel) {
+                    panel.style.transform = 'translate(-50%, -50%) scale(1) rotateY(0deg)';
+                    panel.style.opacity = '1';
+                    panel.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                }
+            }, 10);
+            
+            // Lock body scroll
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function hideGameSelector() {
+            const overlay = document.getElementById('game-selector-overlay');
+            const panel = overlay.querySelector('div');
+            
+            // Animate out
+            overlay.style.opacity = '0';
+            overlay.style.transition = 'opacity 0.3s ease-in';
+            
+            if (panel) {
+                panel.style.transform = 'translate(-50%, -50%) scale(0.8) rotateY(15deg)';
+                panel.style.opacity = '0';
+                panel.style.transition = 'all 0.4s cubic-bezier(0.55, 0.085, 0.68, 0.53)';
+            }
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                
+                // Restore body scroll
+                document.body.style.overflow = '';
+            }, 400);
+        }
+        
+        // Simplified Audio System
+        function playSound(soundId) {
+            try {
+                const audio = document.getElementById(soundId);
+                if (audio) {
+                    audio.currentTime = 0;
+                    audio.play().catch(e => console.log('Audio play failed:', e));
+                }
+            } catch (e) {
+                console.log('Sound error:', e);
+            }
+        }
+        
+        // Start background music on first user interaction
+        let musicStarted = false;
+        document.addEventListener('click', function startMusic() {
+            if (!musicStarted) {
+                const music = document.getElementById('bg-music');
+                if (music && music.paused) {
+                    music.volume = 0.3;
+                    music.play().then(() => {
+                        musicStarted = true;
+                    }).catch(e => console.log('Music play failed:', e));
+                }
+            }
+        }, { once: true });
+        
+        // Close menu with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideGameSelector();
+            }
+        });
+        
+    </script>
+</body>
+</html>

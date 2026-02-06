@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Game - Multi-Game System</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <!-- HAMBURGER MENU -->
+    <div id="hamburger-menu" class="hamburger-menu">
+        <button id="hamburger-btn" class="hamburger-btn">
+            <span>☰</span>
+        </button>
+    </div>
+
+    <!-- GAME SELECTOR OVERLAY (Hidden by default) -->
+    <div id="game-selector" class="game-selector hidden">
+        <div class="game-selector-content">
+            <div class="game-selector-header">
+                <h3>✨ CHỌN GAME</h3>
+                <button id="close-selector" class="close-btn">✖</button>
+            </div>
+            <div class="game-list">
+                <button class="game-btn active" data-game="toan-so">
+                    <span class="game-icon">🖐️</span>
+                    <div class="game-info">
+                        <div class="game-title">Toán Số</div>
+                        <div class="game-desc">Luyện tính nhẩm</div>
+                    </div>
+                </button>
+                
+                <button class="game-btn" data-game="toan-choi">
+                    <span class="game-icon">🚀</span>
+                    <div class="game-info">
+                        <div class="game-title">Toán Chơi</div>
+                        <div class="game-desc">Asteroid Miner</div>
+                    </div>
+                </button>
+                
+                <button class="game-btn" data-game="tu-tien">
+                    <span class="game-icon">⚔️</span>
+                    <div class="game-info">
+                        <div class="game-title">Tu Tiên</div>
+                        <div class="game-desc">Thiên Đạo Đại Chiến</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN GAME AREA -->
+    <div id="game-area" class="game-area">
+        <!-- Games will be loaded here dynamically -->
+    </div>
+
+    <!-- LOADING SCREEN -->
+    <div id="loading-screen" class="loading-screen hidden">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Đang tải game...</div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="main-app-simple.js"></script>
+    <script>
+        // Initialize the Multi-Game Application
+        let gameApp;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, initializing Multi-Game App...');
+            try {
+                gameApp = new MultiGameApp();
+                gameApp.init();
+            } catch (error) {
+                console.error('Failed to create MultiGameApp:', error);
+            }
+        });
+    </script>
+</body>
+</html>

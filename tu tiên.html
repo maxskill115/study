@@ -1,0 +1,3386 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <title>Thiên Đạo: Tiên Ma Đại Chiến</title>
+    <!-- Background Music -->
+    <audio id="bg-music" preload="auto" loop>
+        <source src="music/Sound_TLBB/music/yinsen1.mp3" type="audio/mpeg">
+    </audio>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://threejs.org/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@500;700&display=swap');
+
+        /* TLBB Enhanced Menu Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; backdrop-filter: blur(0px); }
+            to { opacity: 1; backdrop-filter: blur(15px); }
+        }
+        
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), inset 0 0 15px rgba(255, 215, 0, 0.05); }
+            50% { box-shadow: 0 0 35px rgba(255, 215, 0, 0.5), inset 0 0 20px rgba(255, 215, 0, 0.1); }
+        }
+        
+        .game-nav-btn:hover {
+            transform: scale(1.05) translateY(-2px) !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
+        }
+        
+        .game-nav-btn:active {
+            transform: scale(0.98) !important;
+        }
+        
+        .game-nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .game-nav-btn:hover::before {
+            left: 100%;
+        }
+
+        :root {
+            --primary-gold: #ffd700;
+            --danger-red: #ff3333;
+            --magic-cyan: #00f2ff;
+            --jade-green: #00a86b;
+            --soul-purple: #bc13fe;
+            --void-dark: #050505;
+            --ui-bg: rgba(0, 0, 0, 0.95);
+        }
+
+        body {
+            margin: 0; overflow: hidden;
+            background-color: var(--void-dark);
+            font-family: 'Noto Serif SC', serif;
+            color: white;
+            user-select: none;
+            cursor: crosshair;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        #game-container {
+            position: relative; width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+        }
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+        }
+
+        canvas { 
+            display: block; 
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        /* Mobile canvas optimization */
+        @media (max-width: 768px) {
+            canvas {
+                width: 100vw !important;
+                height: 100vh !important;
+                image-rendering: optimizeSpeed;
+                image-rendering: -webkit-optimize-contrast;
+                image-rendering: optimize-contrast;
+            }
+        }
+        .vignette {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.95) 100%);
+            pointer-events: none; z-index: 10;
+        }
+
+        .ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; padding: 20px; box-sizing: border-box; z-index: 20;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        /* Mobile Responsive Design */
+        @media (max-width: 768px) {
+            #game-menu {
+                position: fixed !important;
+                top: 10px !important;
+                right: 10px !important;
+                z-index: 99999 !important;
+                padding: 8px 12px !important;
+                font-size: 16px !important;
+                pointer-events: auto !important;
+                touch-action: manipulation !important;
+                -webkit-tap-highlight-color: transparent !important;
+            }
+            
+            .ui-layer {
+                padding: 10px;
+            }
+            .hud-left {
+                position: absolute !important;
+                top: 10px !important;
+                left: 10px !important;
+                width: 180px !important;
+                min-width: 180px !important;
+                padding: 6px !important;
+                font-size: 9px !important;
+                z-index: 25 !important;
+            }
+            
+            /* Hide most elements on mobile, keep only health */
+            .hud-left #rank-title,
+            .hud-left .stat-row:nth-child(n+3),
+            .hud-left .bar-bg:nth-child(n+4),
+            .hud-left #soul-stat-row,
+            .hud-left #soul-bar-bg,
+            .hud-left #lightning-stat-row,
+            .hud-left .artifact-slot,
+            .hud-left #weapon-info {
+                display: none !important;
+            }
+            
+            /* Keep and resize health elements */
+            .hud-left .stat-row:nth-child(2) {
+                font-size: 8px !important;
+                margin-bottom: 2px !important;
+            }
+            
+            .hud-left .bar-bg:nth-child(3) {
+                height: 8px !important;
+            }
+            
+            .hud-right {
+                display: none !important;
+            }
+            #timer, #kill-counter {
+                display: none !important;
+            }
+            #boss-hud {
+                width: 90% !important;
+                top: 60px !important;
+            }
+            #boss-name {
+                font-size: 18px !important;
+            }
+            .menu-screen h1 {
+                font-size: 2rem !important;
+            }
+            .choice-screen .choice-cards {
+                flex-direction: column !important;
+                gap: 10px !important;
+            }
+            .choice-card {
+                width: 100% !important;
+                max-width: 300px !important;
+                margin: 0 auto !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .ui-layer {
+                padding: 5px;
+            }
+            .hud-left, .hud-right {
+                min-width: 250px;
+                padding: 8px !important;
+                font-size: 11px;
+            }
+            .menu-screen h1 {
+                font-size: 1.5rem !important;
+            }
+            .btn-start {
+                font-size: 14px !important;
+                padding: 12px 20px !important;
+            }
+        }
+
+        /* Tablet Responsive Design */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .hud-left {
+                width: 320px !important;
+                padding: 12px !important;
+            }
+            .hud-right {
+                width: 250px !important;
+                padding: 12px !important;
+            }
+        }
+        
+        /* Tablet Portrait */
+        @media (min-width: 769px) and (max-width: 1024px) and (orientation: portrait) {
+            .ui-layer {
+                padding: 15px;
+            }
+            .hud-left {
+                width: 300px !important;
+                font-size: 13px;
+            }
+            .hud-right {
+                width: 220px !important;
+                font-size: 13px;
+            }
+        }
+        
+        /* Tablet Landscape */
+        @media (min-width: 769px) and (max-width: 1024px) and (orientation: landscape) {
+            .ui-layer {
+                padding: 12px;
+            }
+            .hud-left {
+                width: 280px !important;
+                font-size: 12px;
+            }
+            .hud-right {
+                width: 200px !important;
+                font-size: 12px;
+            }
+        }
+
+        /* Touch Controls Visual Feedback */
+        .touch-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            gap: 10px;
+            pointer-events: none;
+            z-index: 25;
+        }
+
+        @media (max-width: 768px) {
+            .touch-controls {
+                display: flex;
+            }
+        }
+
+        .touch-hint {
+            background: rgba(0, 0, 0, 0.7);
+            color: var(--primary-gold);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            border: 1px solid var(--primary-gold);
+            animation: pulseHint 2s infinite;
+        }
+
+        @keyframes pulseHint {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        /* Mobile button optimization */
+        @media (max-width: 768px) {
+            button, .btn-start, .choice-card, .game-nav-btn, .gm-action {
+                min-height: 44px !important;
+                touch-action: manipulation !important;
+                -webkit-tap-highlight-color: transparent !important;
+                user-select: none !important;
+                -webkit-user-select: none !important;
+                pointer-events: auto !important;
+            }
+            
+            button:active, .btn-start:active, .choice-card:active, .game-nav-btn:active {
+                transform: scale(0.95) !important;
+                transition: transform 0.1s !important;
+            }
+        }
+
+        /* BOSS BAR */
+        #boss-hud {
+            position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
+            width: 60%; display: none; pointer-events: none; text-align: center;
+        }
+        #boss-name { font-family: 'Ma Shan Zheng'; color: var(--danger-red); font-size: 24px; text-shadow: 0 0 10px red; }
+        #boss-hp-bg { width: 100%; height: 15px; background: #222; border: 1px solid #555; margin-top: 5px; border-radius: 10px; overflow: hidden; }
+        #boss-hp-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #800, #f00); transition: width 0.1s; }
+
+        .hud-left {
+            display: flex; flex-direction: column; gap: 5px;
+            background: var(--ui-bg); padding: 15px; border-radius: 8px;
+            border: 1px solid #444; border-left: 4px solid var(--primary-gold);
+            backdrop-filter: blur(5px); width: 340px; pointer-events: auto;
+            position: absolute;
+            top: 30px; /* Increased from 20px for more comfortable distance */
+            left: 30px; /* Increased from 20px for more comfortable distance */
+        }
+
+        .bar-bg { width: 100%; height: 14px; background: #222; border-radius: 3px; overflow: hidden; border: 1px solid #444; position: relative; }
+        .bar-fill { height: 100%; width: 100%; transition: width 0.1s linear; position: relative; }
+        .hp-fill { background: linear-gradient(90deg, #8b0000, #ff3333); }
+        .xp-fill { background: linear-gradient(90deg, #004d40, #00f2ff); }
+        .soul-fill { background: linear-gradient(90deg, #4b0082, #bc13fe); box-shadow: 0 0 5px #bc13fe; }
+        
+        .artifact-slot {
+            display: flex; align-items: center; gap: 10px; margin-top: 10px;
+            border-top: 1px solid #444; padding-top: 10px;
+        }
+        .artifact-icon {
+            width: 40px; height: 40px; border: 2px solid gold; border-radius: 50%;
+            background: #222; display: flex; justify-content: center; align-items: center;
+            font-size: 24px; position: relative; overflow: hidden;
+            box-shadow: 0 0 10px gold;
+        }
+        .artifact-cooldown {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 0%;
+            background: rgba(0,0,0,0.8); transition: height 0.1s linear;
+        }
+
+        .stat-row { display: flex; justify-content: space-between; font-size: 12px; color: #ccc; margin-bottom: 2px; }
+        #rank-title { font-family: 'Ma Shan Zheng'; font-size: 32px; color: var(--primary-gold); margin-bottom: 5px; }
+        
+        #weapon-info { 
+            font-family: 'Cinzel'; color: var(--magic-cyan); font-size: 14px; margin-top: 8px; 
+            border-top: 1px solid #444; padding-top: 8px; font-weight: bold;
+        }
+
+        .hud-right {
+            position: absolute; top: 80px; right: 30px; text-align: right;
+            background: var(--ui-bg); padding: 10px 20px; border-radius: 8px; border: 1px solid #444;
+        }
+        #timer { font-size: 28px; font-weight: bold; font-family: monospace; }
+        #kill-counter { color: #aaa; font-size: 14px; margin-top: 5px; }
+
+        /* MODALS */
+        .modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 9999; pointer-events: auto; cursor: default;
+        }
+        .hidden { display: none !important; }
+
+        .btn-start {
+            margin-top: 30px; padding: 15px 50px; font-size: 24px;
+            background: transparent; border: 2px solid var(--primary-gold); color: var(--primary-gold);
+            font-family: 'Noto Serif SC'; cursor: pointer; transition: 0.3s;
+            pointer-events: auto;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-start:hover { background: var(--primary-gold); color: #000; box-shadow: 0 0 30px var(--primary-gold); }
+
+        #levelup-screen {
+            background: radial-gradient(circle, rgba(20, 30, 48, 0.98) 0%, rgba(0, 0, 0, 0.99) 100%);
+            overflow: hidden;
+        }
+        
+        .bg-bagua {
+            position: absolute; width: 800px; height: 800px;
+            background: url('https://img.icons8.com/ios/452/yin-yang.png') center/contain no-repeat;
+            opacity: 0.05; filter: invert(1);
+            animation: rotateBagua 60s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes rotateBagua { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        #upgrade-grid { display: flex; gap: 40px; justify-content: center; align-items: center; z-index: 10000; }
+        
+        .choice-card {
+            width: 220px; height: 380px;
+            background: linear-gradient(135deg, #151a20 0%, #0a0c10 100%);
+            border: 2px solid #333;
+            border-radius: 5px;
+            position: relative;
+            cursor: pointer;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; flex-direction: column;
+            padding: 20px; box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            pointer-events: auto;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .choice-card:hover {
+            transform: translateY(-20px) scale(1.05);
+            border-color: var(--primary-gold);
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+        }
+
+        .card-title {
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 28px; color: #eee; text-align: center;
+        }
+
+        .card-desc {
+            font-size: 14px; color: #aaa; text-align: center; line-height: 1.6; font-style: italic;
+        }
+
+        .rarity-tag {
+            font-family: 'Ma Shan Zheng'; font-size: 14px; letter-spacing: 2px;
+            text-transform: uppercase; margin-bottom: 10px; padding: 2px 8px; border: 1px solid;
+            display: inline-block; align-self: center;
+        }
+
+        .rarity-common { color: #ccc; border-color: #555; }
+        .rarity-rare { color: var(--soul-purple); border-color: var(--soul-purple); text-shadow: 0 0 10px var(--soul-purple); }
+        .rarity-mythic { color: var(--primary-gold); border-color: var(--primary-gold); text-shadow: 0 0 15px var(--primary-gold); }
+
+        .dmg-text {
+            position: absolute; font-weight: bold; font-family: 'Cinzel'; pointer-events: none;
+            animation: floatUp 0.8s forwards; text-shadow: 1px 1px 0 #000; z-index: 100;
+        }
+        .crit-text {
+            font-size: 24px !important; color: #ff0 !important; text-shadow: 0 0 10px red !important;
+            animation: critPop 0.5s forwards !important;
+        }
+        @keyframes floatUp { to { transform: translateY(-40px); opacity: 0; } }
+        @keyframes critPop { 0% { transform: scale(0.5); } 50% { transform: scale(1.5); } 100% { transform: scale(1) translateY(-30px); opacity: 0; } }
+
+        #notify-popup {
+            position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+            font-family: 'Ma Shan Zheng'; font-size: 50px; color: gold;
+            text-shadow: 0 0 20px red; pointer-events: none; opacity: 0;
+            transition: opacity 0.5s; z-index: 3000; text-align: center;
+            white-space: nowrap;
+            max-width: 90vw;
+        }
+        @media (max-width: 768px) {
+            #notify-popup {
+                font-size: 24px !important;
+                white-space: nowrap !important;
+            }
+        }
+        .pop-anim { animation: popScale 1.5s forwards; }
+        @keyframes popScale { 0% { opacity:0; transform:translateX(-50%) scale(0.5); } 10% { opacity:1; transform:translateX(-50%) scale(1.1); } 90% { opacity:1; transform:translateX(-50%) scale(1); } 100% { opacity:0; transform:translateX(-50%) scale(1.3); } }
+
+        /* GM Tools Animation */
+        #gm-notification {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            padding: 20px 40px; background: linear-gradient(45deg, #000, #333);
+            border: 2px solid gold; border-radius: 15px; color: gold;
+            font-family: 'Ma Shan Zheng'; font-size: 24px; text-align: center;
+            pointer-events: none; opacity: 0; z-index: 9999;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+        .gm-show { animation: gmPop 2s ease-out; }
+        @keyframes gmPop {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5) rotateY(-90deg); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) rotateY(0deg); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotateY(0deg); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8) rotateY(90deg); }
+        }
+
+        #gm-btn { 
+            position: absolute; 
+            bottom: 20px; 
+            right: 20px; 
+            width: 50px; 
+            height: 50px; 
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 180, 0, 0.2)); 
+            color: var(--primary-gold); 
+            border: 2px solid var(--primary-gold); 
+            border-radius: 50%; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            cursor: pointer; 
+            z-index: 2000; 
+            pointer-events: auto; 
+            font-weight: bold; 
+            font-size: 12px;
+            text-shadow: 0 0 10px var(--primary-gold);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+        #gm-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+        }
+        #gm-menu { 
+            position: absolute; 
+            bottom: 80px; 
+            right: 20px; 
+            width: 260px; 
+            max-height: 80vh;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(20, 10, 0, 0.9)); 
+            border: 2px solid var(--primary-gold); 
+            border-radius: 12px;
+            padding: 0; 
+            display: none; 
+            z-index: 2001; 
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+            overflow: hidden;
+        }
+        .gm-header {
+            color: var(--primary-gold);
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px 8px;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+            text-shadow: 0 0 10px var(--primary-gold);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 180, 0, 0.05));
+            white-space: nowrap;
+        }
+        .gm-header span {
+            flex: 1;
+            text-align: center;
+        }
+        .gm-close-btn {
+            background: linear-gradient(135deg, rgba(255, 51, 51, 0.3), rgba(200, 0, 0, 0.2));
+            border: 1px solid #ff6666;
+            color: #ff6666;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        .gm-close-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 51, 51, 0.5), rgba(200, 0, 0, 0.3));
+            transform: scale(1.1);
+        }
+        .gm-content {
+            padding: 8px;
+            max-height: calc(80vh - 50px);
+            overflow-y: auto;
+        }
+        .gm-max-power {
+            background: linear-gradient(135deg, rgba(255, 51, 51, 0.3), rgba(255, 0, 0, 0.1)) !important;
+            border-color: #ff3333 !important;
+            color: #ff3333 !important;
+        }
+        
+        /* GM Password Modal Styles */
+        .gm-password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+        .gm-password-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #0a1a2a 0%, #1a2a3a 50%, #0a1a2a 100%);
+            border: 3px solid var(--primary-gold);
+            border-radius: 25px;
+            padding: 40px;
+            text-align: center;
+            min-width: 350px;
+            max-width: 90vw;
+            box-sizing: border-box;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
+        }
+        .gm-password-title {
+            color: var(--primary-gold);
+            margin-bottom: 25px;
+            font-size: 24px;
+            text-shadow: 0 0 20px var(--primary-gold);
+        }
+        .gm-password-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid var(--primary-gold);
+            border-radius: 12px;
+            color: var(--primary-gold);
+            margin-bottom: 20px;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .gm-password-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .gm-password-btn {
+            padding: 12px 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .gm-confirm-btn {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 180, 0, 0.2));
+            border: 2px solid var(--primary-gold);
+            color: var(--primary-gold);
+        }
+        .gm-confirm-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.5), rgba(255, 180, 0, 0.3));
+            transform: scale(1.05);
+        }
+        .gm-cancel-btn {
+            background: linear-gradient(135deg, rgba(255, 51, 51, 0.3), rgba(200, 0, 0, 0.2));
+            border: 2px solid #ff6666;
+            color: #ff6666;
+        }
+        .gm-cancel-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 51, 51, 0.5), rgba(200, 0, 0, 0.3));
+            transform: scale(1.05);
+        }
+        
+        /* Mobile Bell Cooldown Indicator */
+        .mobile-bell-indicator {
+            display: none; /* Hidden on PC */
+            position: absolute;
+            top: 115px;
+            left: 10px;
+            width: 40px;
+            height: 40px;
+            background: rgba(30, 30, 30, 0.9);
+            border: 2px solid #555;
+            border-radius: 10px;
+            z-index: 2000;
+            pointer-events: none;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .bell-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 22px;
+            z-index: 2;
+            opacity: 0.5;
+            filter: grayscale(100%);
+            transition: all 0.3s ease;
+        }
+        .bell-cooldown-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, rgba(20, 20, 20, 0.9), rgba(60, 60, 60, 0.7));
+            z-index: 1;
+            transition: height 0.1s linear;
+        }
+        .bell-timer {
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #888;
+            font-weight: bold;
+            text-shadow: 0 0 5px black;
+            white-space: nowrap;
+            transition: color 0.3s ease;
+        }
+        /* Bell Ready - Yellow Glowing */
+        .bell-ready {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 180, 0, 0.2)) !important;
+            border-color: var(--primary-gold) !important;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 40px rgba(255, 215, 0, 0.3);
+            animation: bellGlow 1.5s infinite;
+        }
+        .bell-ready .bell-icon {
+            opacity: 1 !important;
+            filter: grayscale(0%) drop-shadow(0 0 8px gold) !important;
+        }
+        .bell-ready .bell-cooldown-overlay {
+            height: 0% !important;
+            opacity: 0;
+        }
+        .bell-ready .bell-timer {
+            color: var(--primary-gold) !important;
+            text-shadow: 0 0 10px gold;
+        }
+        @keyframes bellGlow {
+            0%, 100% { 
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.5), 0 0 30px rgba(255, 215, 0, 0.2);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 25px rgba(255, 215, 0, 0.8), 0 0 50px rgba(255, 215, 0, 0.4);
+                transform: scale(1.05);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-bell-indicator {
+                display: block !important;
+            }
+        }
+        .gm-action { 
+            width: 100%; 
+            padding: 6px; 
+            margin-bottom: 4px; 
+            background: linear-gradient(135deg, rgba(60, 40, 0, 0.7), rgba(40, 30, 0, 0.5)); 
+            color: var(--primary-gold); 
+            border: 1px solid rgba(255, 215, 0, 0.3); 
+            border-radius: 6px;
+            cursor: pointer; 
+            text-align: left;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        .gm-action:hover { 
+            color: #ff9900; 
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 180, 0, 0.1));
+            border-color: #ff9900;
+            transform: scale(1.02);
+        }
+
+        /* Mobile Portrait Mode - Reduce all font sizes by 30% */
+        @media (max-width: 768px) and (orientation: portrait) {
+            body {
+                font-size: 11px; /* Reduced from ~16px */
+            }
+            
+            h1 {
+                font-size: 56px !important; /* Reduced 30% from 80px */
+                text-align: center !important;
+                margin: 0 auto !important;
+                padding: 0 10px !important;
+                line-height: 1.2 !important;
+            }
+            
+            /* Main title - Thien Dao Luan Hoi */
+            #main-title {
+                font-size: 38px !important;
+                white-space: nowrap !important;
+            }
+            
+            /* Game over screen title */
+            #gameover-screen h1 {
+                font-size: 42px !important; /* Reduced 30% from 60px */
+            }
+            
+            /* Level up screen title */  
+            #levelup-screen h2 {
+                font-size: 35px !important; /* Reduced 30% from 50px */
+            }
+            
+            #boss-name { 
+                font-size: 17px !important; /* Reduced from 24px */
+                text-align: center !important;
+            }
+            
+            #rank-title { 
+                font-size: 22px !important; /* Reduced from 32px */
+                text-align: center !important;
+            }
+            
+            .ui-layer {
+                font-size: 8px !important; /* Reduced 30% */
+            }
+            
+            .hud-left, .hud-right {
+                font-size: 8px !important; /* Reduced 30% */
+                min-width: 175px !important; /* Reduced 30% */
+                padding: 6px !important;
+            }
+            
+            /* Mobile GM Tools - Below HP bar */
+            #gm-btn {
+                position: absolute !important;
+                top: 85px !important;
+                left: 10px !important;
+                bottom: auto !important;
+                right: auto !important;
+                width: 35px !important;
+                height: 22px !important;
+                font-size: 9px !important;
+                border-radius: 8px !important;
+            }
+            
+            #gm-menu {
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                bottom: auto !important;
+                right: auto !important;
+                width: 85vw !important;
+                max-width: 300px !important;
+                max-height: 70vh !important;
+                padding: 0 !important;
+                border-radius: 15px !important;
+                z-index: 9998 !important;
+            }
+            
+            .gm-header {
+                font-size: 12px !important;
+                padding: 10px 8px !important;
+            }
+            
+            .gm-close-btn {
+                width: 28px !important;
+                height: 28px !important;
+                font-size: 14px !important;
+            }
+            
+            .gm-content {
+                padding: 10px !important;
+                max-height: calc(70vh - 50px) !important;
+            }
+            
+            .gm-action {
+                padding: 10px 8px !important;
+                font-size: 12px !important;
+                margin-bottom: 6px !important;
+                border-radius: 8px !important;
+            }
+            
+            .gm-icon {
+                font-size: 16px !important;
+            }
+            
+            /* Mobile GM Password Modal */
+            .gm-password-panel {
+                min-width: auto !important;
+                width: 90vw !important;
+                max-width: 320px !important;
+                padding: 25px 20px !important;
+                border-radius: 18px !important;
+            }
+            
+            .gm-password-title {
+                font-size: 18px !important;
+                margin-bottom: 18px !important;
+            }
+            
+            .gm-password-input {
+                padding: 12px !important;
+                font-size: 14px !important;
+                margin-bottom: 15px !important;
+            }
+            
+            .gm-password-buttons {
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+            
+            .gm-password-btn {
+                width: 100% !important;
+                padding: 12px 20px !important;
+                font-size: 13px !important;
+            }
+            
+            /* Mobile Game Selector Overlay */
+            #game-selector-panel {
+                min-width: 85vw !important;
+                max-width: 92vw !important;
+                padding: 20px 15px !important;
+                border-radius: 15px !important;
+            }
+            
+            #game-selector-panel h2 {
+                font-size: 18px !important;
+                margin-bottom: 12px !important;
+            }
+            
+            #game-selector-panel p {
+                font-size: 11px !important;
+                margin-bottom: 12px !important;
+            }
+            
+            #game-selector-panel .game-nav-btn {
+                padding: 10px 12px !important;
+                font-size: 12px !important;
+                border-radius: 10px !important;
+            }
+            
+            #game-selector-panel .game-nav-btn span:first-child {
+                font-size: 16px !important;
+            }
+            
+            .gm-action {
+                padding: 4px !important;
+                font-size: 10px !important;
+                margin-bottom: 3px !important;
+            }
+            
+            .gm-header {
+                font-size: 12px !important;
+                padding: 4px !important;
+                margin-bottom: 6px !important;
+            }
+            
+            #timer {
+                font-size: 20px !important; /* Reduced from 28px */
+                text-align: center !important;
+            }
+            
+            #kill-counter {
+                font-size: 10px !important; /* Reduced from 14px */
+                text-align: center !important;
+            }
+            
+            .stat-row {
+                font-size: 8px !important; /* Reduced from ~12px */
+            }
+            
+            .artifact-slot {
+                font-size: 10px !important;
+            }
+            
+            .btn-start {
+                font-size: 17px !important; /* Reduced from 24px */
+                padding: 10px 35px !important; /* Reduced from 15px 50px */
+                text-align: center !important;
+            }
+            
+            .gm-action {
+                font-size: 8px !important;
+                padding: 6px !important;
+            }
+            
+            .game-nav-btn {
+                font-size: 11px !important; /* Reduced from 16px */
+                padding: 10px 14px !important; /* Reduced from 15px 20px */
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <!-- ENHANCED HAMBURGER MENU FOR GAME SWITCHING -->
+    <div id="game-menu" style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 99999;
+        background: linear-gradient(135deg, rgba(60, 40, 0, 0.95), rgba(40, 30, 0, 0.9));
+        border: 2px solid var(--primary-gold);
+        border-radius: 12px;
+        padding: 12px 16px;
+        cursor: pointer;
+        color: var(--primary-gold);
+        font-size: 20px;
+        backdrop-filter: blur(15px);
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        font-family: 'Cinzel', serif;
+        box-shadow: 
+            0 0 20px rgba(255, 215, 0, 0.3),
+            inset 0 0 15px rgba(255, 215, 0, 0.05);
+        font-weight: bold;
+        text-shadow: 0 0 10px var(--primary-gold);
+        user-select: none;
+    " id="game-menu-btn" title="Đại Điện Điều Khiển - Chọn Chiến Trường"
+    onmouseover="
+        this.style.transform = 'scale(1.1) rotate(90deg)';
+        this.style.boxShadow = '0 0 30px rgba(255, 215, 0, 0.6), inset 0 0 20px rgba(255, 215, 0, 0.1)';
+        this.style.borderColor = '#ff9900';
+        this.style.color = '#ff9900';
+    "
+    onmouseout="
+        this.style.transform = 'scale(1) rotate(0deg)';
+        this.style.boxShadow = '0 0 20px rgba(255, 215, 0, 0.3), inset 0 0 15px rgba(255, 215, 0, 0.05)';
+        this.style.borderColor = 'var(--primary-gold)';
+        this.style.color = 'var(--primary-gold)';
+    "
+    onmousedown="this.style.transform = 'scale(0.95) rotate(90deg)'"
+    onmouseup="this.style.transform = 'scale(1.1) rotate(90deg)'">
+        ☰
+    </div>
+
+    <!-- ENHANCED TLBB STYLE GAME SELECTOR OVERLAY -->
+    <div id="game-selector-overlay" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(20, 10, 0, 0.9));
+        z-index: 100000;
+        display: none;
+        backdrop-filter: blur(15px);
+        animation: fadeIn 0.5s ease-out;
+    " onclick="hideGameSelector()">
+        <div id="game-selector-panel" style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #2a1a0a 0%, #3a2a1a 50%, #2a1a0a 100%);
+            border: 3px solid var(--primary-gold);
+            border-radius: 25px;
+            padding: 40px 35px;
+            text-align: center;
+            color: var(--primary-gold);
+            min-width: 380px;
+            max-width: 450px;
+            font-family: 'Noto Serif SC', serif;
+            box-shadow: 
+                0 0 50px rgba(255, 215, 0, 0.4),
+                inset 0 0 30px rgba(255, 215, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        " onclick="event.stopPropagation()">
+            
+            <!-- Decorative Header -->
+            <div style="
+                background: linear-gradient(90deg, transparent, var(--primary-gold), transparent);
+                height: 2px;
+                width: 80%;
+                margin: 0 auto 20px auto;
+                opacity: 0.6;
+            "></div>
+            
+            <h2 style="
+                color: var(--primary-gold); 
+                margin-bottom: 25px;
+                font-size: 28px;
+                text-shadow: 0 0 20px var(--primary-gold);
+                font-weight: bold;
+                font-family: 'Cinzel', serif;
+            ">⚔️ ĐẠI ĐIỆN ĐIỀU KHIỂN</h2>
+            
+            <p style="
+                color: #aa8844;
+                margin-bottom: 30px;
+                font-size: 14px;
+                font-family: 'Noto Serif SC', serif;
+            ">Chọn chiến trường để tiếp tục tu luyện</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <button onclick="window.location.href='./main.html'" class="game-nav-btn" style="
+                    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 180, 0, 0.1));
+                    border: 2px solid var(--primary-gold);
+                    color: var(--primary-gold);
+                    padding: 15px 20px;
+                    border-radius: 15px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    font-weight: bold;
+                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                    font-family: 'Noto Serif SC', serif;
+                    position: relative;
+                    overflow: hidden;
+                    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                ">
+                    <span style="font-size: 20px;">🏠</span>
+                    <span>ĐẠI ĐIỆN CHÍNH - Menu Tổng</span>
+                </button>
+                
+                <button onclick="window.location.href='./index.html'" class="game-nav-btn" style="
+                    background: linear-gradient(135deg, rgba(136, 204, 255, 0.2), rgba(100, 180, 255, 0.1));
+                    border: 2px solid #88ccff;
+                    color: #88ccff;
+                    padding: 15px 20px;
+                    border-radius: 15px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    font-weight: bold;
+                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                    font-family: 'Noto Serif SC', serif;
+                    position: relative;
+                    overflow: hidden;
+                    text-shadow: 0 0 10px rgba(136, 204, 255, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                ">
+                    <span style="font-size: 20px;">🖐️</span>
+                    <span>TOÁN SỐ - Finger Math</span>
+                </button>
+                
+                <button onclick="window.location.href='./toán chơi.html'" class="game-nav-btn" style="
+                    background: linear-gradient(135deg, rgba(0, 242, 255, 0.2), rgba(0, 150, 255, 0.1));
+                    border: 2px solid #00f2ff;
+                    color: #00f2ff;
+                    padding: 15px 20px;
+                    border-radius: 15px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    font-weight: bold;
+                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                    font-family: 'Noto Serif SC', serif;
+                    position: relative;
+                    overflow: hidden;
+                    text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                ">
+                    <span style="font-size: 20px;">🚀</span>
+                    <span>TOÁN CHƠI - Asteroid Miner</span>
+                </button>
+            </div>
+            
+            <!-- Close Button -->
+            <button onclick="hideGameSelector()" style="
+                background: linear-gradient(135deg, rgba(255, 51, 51, 0.3), rgba(200, 0, 0, 0.2));
+                border: 2px solid #ff6666;
+                color: #ff6666;
+                padding: 12px 20px;
+                border-radius: 12px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+                margin-top: 25px;
+                font-family: 'Noto Serif SC', serif;
+                transition: all 0.3s ease;
+                text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
+            " onmouseover="this.style.background='linear-gradient(135deg, rgba(255, 51, 51, 0.5), rgba(200, 0, 0, 0.3))'; this.style.transform='scale(1.05)'" onmouseout="this.style.background='linear-gradient(135deg, rgba(255, 51, 51, 0.3), rgba(200, 0, 0, 0.2))'; this.style.transform='scale(1)'">
+                ✖ ĐÓNG ĐẠI ĐIỆN
+            </button>
+            
+            <!-- Decorative corners -->
+            <div style="
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                width: 25px;
+                height: 25px;
+                border-top: 3px solid var(--primary-gold);
+                border-left: 3px solid var(--primary-gold);
+                opacity: 0.7;
+            "></div>
+            <div style="
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: 25px;
+                height: 25px;
+                border-top: 3px solid var(--primary-gold);
+                border-right: 3px solid var(--primary-gold);
+                opacity: 0.7;
+            "></div>
+            <div style="
+                position: absolute;
+                bottom: 10px;
+                left: 10px;
+                width: 25px;
+                height: 25px;
+                border-bottom: 3px solid var(--primary-gold);
+                border-left: 3px solid var(--primary-gold);
+                opacity: 0.7;
+            "></div>
+            <div style="
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+                width: 25px;
+                height: 25px;
+                border-bottom: 3px solid var(--primary-gold);
+                border-right: 3px solid var(--primary-gold);
+                opacity: 0.7;
+            "></div>
+        </div>
+    </div>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    <div class="vignette"></div>
+    <div id="damage-container"></div>
+    <div id="notify-popup">PHÁP BẢO XUẤT THẾ!</div>
+
+    <!-- HUD -->
+    <div id="hud" class="ui-layer hidden">
+        <div id="boss-hud">
+            <div id="boss-name">☠️ HUYẾT MA LÃO TỔ ☠️</div>
+            <div id="boss-hp-bg"><div id="boss-hp-fill"></div></div>
+        </div>
+
+        <div class="hud-left">
+            <div id="rank-title">Phàm Nhân</div>
+            <div class="stat-row"><span>Sinh Mệnh</span><span id="hp-text">100/100</span></div>
+            <div class="bar-bg"><div id="hp-bar" class="bar-fill hp-fill"></div></div>
+            <div class="stat-row" style="margin-top:5px"><span>Kinh Nghiệm</span><span id="xp-text">0%</span></div>
+            <div class="bar-bg"><div id="xp-bar" class="bar-fill xp-fill" style="width:0%"></div></div>
+            <div id="soul-stat-row" class="stat-row" style="margin-top:5px; display:none">
+                <span style="color:#bc13fe">Võ Hồn: <span id="soul-rank">Thanh Liên</span></span>
+                <span id="soul-xp-text">0%</span>
+            </div>
+            <div id="soul-bar-bg" class="bar-bg" style="display:none; margin-top:2px"><div id="soul-xp-bar" class="bar-fill soul-fill" style="width:0%"></div></div>
+            <div id="lightning-stat-row" class="stat-row" style="margin-top:5px; display:none">
+                <span id="lightning-label" style="color:#00f2ff">Lôi Ấn: <span id="lightning-rank">Cấp 0</span></span>
+                <span id="lightning-type">Lam Lôi</span>
+            </div>
+            <div class="artifact-slot">
+                <div class="artifact-icon">🔔<div id="artifact-cd-overlay" class="artifact-cooldown"></div></div>
+                <div>
+                    <div style="font-size:12px; color:gold; font-weight:bold">Đông Hoàng Chuông</div>
+                    <div style="font-size:10px; color:#aaa">Chuột Phải kích hoạt</div>
+                </div>
+            </div>
+            <div id="weapon-info">Thanh Vân Kiếm | 1/15</div>
+        </div>
+        <div class="hud-right">
+            <div id="timer">00:00</div>
+            <div id="kill-counter">Diệt Ma: 0</div>
+        </div>
+    </div>
+
+    <!-- START SCREEN -->
+    <div id="start-screen" class="modal">
+        <h1 id="main-title" style="font-family:'Ma Shan Zheng'; font-size:80px; color:gold; margin:0; text-align:center; white-space:nowrap;">Thiên Đạo Luân Hồi</h1>
+        <p style="color:#ccc; margin-top:10px;">Giai Đoạn 14: Tiên Nhân Thoát Tục</p>
+        <button class="btn-start" id="start-game-btn">NHẬP THẾ</button>
+    </div>
+
+    <div id="levelup-screen" class="modal hidden">
+        <div class="bg-bagua"></div>
+        <h2 style="color:gold; font-size:50px; margin-bottom:40px; font-family:'Ma Shan Zheng'; text-shadow: 0 0 20px rgba(255,215,0,0.5);">Cơ Duyên Thiên Định</h2>
+        <div id="upgrade-grid"></div>
+        <p style="color: rgba(255,255,255,0.3); margin-top: 40px; font-family: 'Ma Shan Zheng'; letter-spacing: 5px;">THIÊN MỆNH TẠI NGÃ</p>
+    </div>
+
+    <div id="gameover-screen" class="modal hidden">
+        <h1 style="color:red; font-size:60px; font-family:'Ma Shan Zheng'; text-align:center;">Thân Tử Đạo Tiêu</h1>
+        <button class="btn-start" onclick="location.reload()">Luân Hồi</button>
+    </div>
+
+    <!-- ENHANCED GM SYSTEM -->
+    <div id="gm-btn" onclick="showGMLogin()" title="GM Panel">⚡GM</div>
+    
+    <!-- Mobile Bell Cooldown Indicator -->
+    <div id="mobile-bell-indicator" class="mobile-bell-indicator">
+        <div class="bell-icon">🔔</div>
+        <div class="bell-cooldown-overlay" id="bell-cooldown-overlay"></div>
+        <div class="bell-timer" id="bell-timer-text"></div>
+    </div>
+    
+    <div id="gm-menu">
+        <div class="gm-header">
+            <span>⚡ THIÊN ĐẠO QUYỀN NĂNG ⚡</span>
+            <button class="gm-close-btn" onclick="closeGMMenu()">✖</button>
+        </div>
+        <div class="gm-content">
+            <button class="gm-action" onclick="gmPlayerLevelUp()">
+                <span class="gm-icon">🆙</span>
+                <span>Thăng Cấp Player</span>
+            </button>
+            <button class="gm-action" onclick="gmSoulLevelUp()">
+                <span class="gm-icon">🔮</span>
+                <span>Thăng Cấp Võ Hồn</span>
+            </button>
+            <button class="gm-action" onclick="gmLightningLevelUp()">
+                <span class="gm-icon">⚡</span>
+                <span>Thăng Cấp Lôi Ấn</span>
+            </button>
+            <button class="gm-action" onclick="gmAddSword()">
+                <span class="gm-icon">⚔️</span>
+                <span>Thêm Phi Kiếm</span>
+            </button>
+            <button class="gm-action" onclick="gmAdd15Swords()">
+                <span class="gm-icon">⚔️⚔️</span>
+                <span>Thêm 15 Phi Kiếm</span>
+            </button>
+            <button class="gm-action" onclick="gmKillAll()">
+                <span class="gm-icon">💀</span>
+                <span>Tiêu Diệt Tất Cả</span>
+            </button>
+            <button class="gm-action" onclick="gmCallBoss()">
+                <span class="gm-icon">👹</span>
+                <span>Gọi Huyết Ma Boss</span>
+            </button>
+            <button class="gm-action gm-max-power" onclick="gmMaxPower()">
+                <span class="gm-icon">🌟</span>
+                <span>Max Toàn Bộ</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- GM Password Modal -->
+    <div id="gm-password-modal" class="gm-password-overlay">
+        <div class="gm-password-panel">
+            <h2 class="gm-password-title">🔒 THIÊN ĐẠO BÍ MẬT</h2>
+            <input type="password" id="gm-password-input" class="gm-password-input" placeholder="Nhập mật khẩu GM...">
+            <div class="gm-password-buttons">
+                <button onclick="validateGMPassword()" class="gm-password-btn gm-confirm-btn">✅ XÁC NHẬN</button>
+                <button onclick="hideGMLogin()" class="gm-password-btn gm-cancel-btn">❌ HỦY BỎ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GM Notification -->
+    <div id="gm-notification"></div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const damageContainer = document.getElementById('damage-container');
+    
+    // Declare player variable early to avoid initialization errors
+    let player = null;
+    
+    // Essential function declarations (needed for HTML onclick handlers)
+    function startGame() {
+        document.getElementById('start-screen').classList.add('hidden'); 
+        document.getElementById('hud').classList.remove('hidden');
+        
+        // Ensure Player class is available
+        if (typeof Player === 'undefined') {
+            console.error('Player class not yet defined');
+            setTimeout(startGame, 100); // Retry after 100ms
+            return;
+        }
+        
+        player = new Player(); 
+        
+        // Center player properly on mobile devices
+        if (window.innerWidth <= 768) {
+            player.x = 0;  // Center horizontally
+            player.y = 0;  // Center vertically
+        }
+        
+        state = { ...state, isDead: false, isPaused: false, time: 0, frame: 0, enemies: [], pickups: [], particles: [], projectiles: [], lightnings: [], kills: 0 };
+        updateHud();
+        
+        // Play start sound
+        if (typeof playSound !== 'undefined') {
+            playSound('levelup');
+        }
+        
+        // Start game timer
+        setInterval(() => { 
+            if(!state.isPaused && !state.isDead) { 
+                state.time += state.gameSpeed; 
+                document.getElementById('timer').innerText = `${Math.floor(state.time/60).toString().padStart(2,'0')}:${Math.floor(state.time%60).toString().padStart(2,'0')}`; 
+            } 
+        }, 1000);
+        
+        if (typeof gameLoop !== 'undefined') {
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+    }
+    
+    function showGameSelector() {
+        const overlay = document.getElementById('game-selector-overlay');
+        if (overlay) {
+            overlay.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    
+    function hideGameSelector() {
+        const overlay = document.getElementById('game-selector-overlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    }
+    
+    // Three.js Setup for 3D GLB Model
+    let scene, camera, renderer, playerModel, mixer, clock;
+    let threeContainer = document.createElement('div');
+    threeContainer.style.position = 'absolute';
+    threeContainer.style.top = '0';
+    threeContainer.style.left = '0';
+    threeContainer.style.pointerEvents = 'none';
+    threeContainer.style.zIndex = '10';
+    document.getElementById('game-container').appendChild(threeContainer);
+    
+    function initThreeJS() {
+        try {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0); // Transparent background
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            threeContainer.appendChild(renderer.domElement);
+            
+            clock = new THREE.Clock();
+            
+            // Enhanced Bright Lighting for TLBB style
+            const ambientLight = new THREE.AmbientLight(0x8080ff, 0.8); // Brighter blue ambient
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2); // Brighter directional
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+            
+            // Additional point light for character glow
+            const pointLight = new THREE.PointLight(0x00ffff, 0.6, 100);
+            pointLight.position.set(0, 20, 0);
+            scene.add(pointLight);
+            
+            // Load GLB Model with better error handling
+            if (typeof THREE.GLTFLoader !== 'undefined') {
+                const loader = new THREE.GLTFLoader();
+                loader.load('./Meshy_AI_A_Scout_from_an_alien_0205060341_texture.glb', function(gltf) {
+                    playerModel = gltf.scene;
+                    
+                    // Scale and position the model
+                    playerModel.scale.set(20, 20, 20);
+                    playerModel.position.set(0, 0, 0);
+                    playerModel.castShadow = true;
+                    playerModel.receiveShadow = true;
+                    
+                    // Apply TLBB-style materials
+                    playerModel.traverse((child) => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                            
+                            // Enhanced materials with bright TLBB glow
+                            if (child.material) {
+                                child.material.emissive = new THREE.Color(0x004488); // Brighter blue emissive
+                                child.material.emissiveIntensity = 0.3; // Increased intensity
+                                child.material.metalness = 0.1;
+                                child.material.roughness = 0.8;
+                            }
+                        }
+                    });
+                    
+                    scene.add(playerModel);
+                    
+                    // Add Tu Tiên magical aura around model
+                    const auraGeometry = new THREE.RingGeometry(15, 25, 32);
+                    const auraMaterial = new THREE.MeshBasicMaterial({
+                        color: 0x00ffff,
+                        transparent: true,
+                        opacity: 0.3,
+                        side: THREE.DoubleSide
+                    });
+                    const auraRing = new THREE.Mesh(auraGeometry, auraMaterial);
+                    auraRing.rotation.x = -Math.PI / 2; // Lay flat
+                    auraRing.position.y = -2;
+                    playerModel.add(auraRing); // Attach to player so it moves with them
+                    
+                    // Animation mixer if model has animations
+                    if (gltf.animations && gltf.animations.length > 0) {
+                        mixer = new THREE.AnimationMixer(playerModel);
+                        
+                        // Play walking/idle animations
+                        gltf.animations.forEach((clip) => {
+                            const action = mixer.clipAction(clip);
+                            action.play();
+                        });
+                    }
+                    
+                    console.log('TLBB 3D Model loaded successfully!');
+                    console.log('Available animations:', gltf.animations.map(a => a.name));
+                }, 
+                // Progress callback
+                function(progress) {
+                    console.log('Loading progress:', (progress.loaded / progress.total * 100) + '%');
+                },
+                // Error callback
+                function(error) {
+                    console.error('Error loading GLB model:', error);
+                    console.log('Make sure Meshy_AI_A_Scout_from_an_alien_0205060341_texture.glb is in the same folder');
+                });
+            } else {
+                console.warn('GLTFLoader not available, 3D model disabled');
+            }
+            
+            camera.position.set(0, 50, 100);
+            camera.lookAt(0, 0, 0);
+        } catch(error) {
+            console.error('Error in initThreeJS:', error);
+        }
+    }
+    
+    function updateThreeJS() {
+        if (!playerModel || !player) return;
+        
+        const delta = clock.getDelta();
+        
+        // Convert 2D game coordinates to 3D world coordinates  
+        const worldX = (player.x - canvas.width/2) * 0.05;
+        const worldZ = -(player.y - canvas.height/2) * 0.05; // Z in 3D = Y in 2D
+        
+        // Tu Tiên floating effect
+        const floatY = Math.sin(state.frame * 0.02) * 3; // Gentle floating
+        
+        playerModel.position.set(worldX, floatY, worldZ);
+        
+        // Fix rotation direction (reversed the rotation)
+        if (player.isMoving) {
+            playerModel.rotation.y = -(player.facing + Math.PI/2); // Reversed rotation
+        }
+        
+        // Tu Tiên style effects
+        playerModel.traverse((child) => {
+            if (child.isMesh && child.material) {
+                // Pulsing glow effect for tu tiên style
+                let glowIntensity = 0.2 + Math.sin(state.frame * 0.03) * 0.1;
+                child.material.emissiveIntensity = glowIntensity;
+                
+                // Lightning tier color effect
+                if (player.skills.lightning > 0) {
+                    let tierColor = LIGHTNING_TIERS.find(t => t.lv <= player.skills.lightning) || LIGHTNING_TIERS[0];
+                    let r = parseInt(tierColor.color.slice(1,3), 16) / 255;
+                    let g = parseInt(tierColor.color.slice(3,5), 16) / 255;
+                    let b = parseInt(tierColor.color.slice(5,7), 16) / 255;
+                    child.material.emissive.setRGB(r * 0.3, g * 0.3, b * 0.3);
+                }
+            }
+        });
+        
+        // Update animation mixer
+        if (mixer) {
+            mixer.update(delta);
+        }
+        
+        // Camera follows player (bird's eye view like TLBB)
+        camera.position.set(worldX, 80, worldZ + 60);
+        camera.lookAt(worldX, floatY, worldZ);
+        
+        renderer.render(scene, camera);
+    }
+    
+    // Initialize Three.js on page load with error handling
+    window.addEventListener('load', () => {
+        try {
+            if (typeof THREE !== 'undefined') {
+                initThreeJS();
+            } else {
+                console.warn('Three.js not loaded, using 2D mode only');
+            }
+        } catch(error) {
+            console.error('Three.js initialization failed:', error);
+            console.log('Falling back to 2D mode');
+        }
+    });
+    
+    function resize() { 
+        canvas.width = window.innerWidth; 
+        canvas.height = window.innerHeight; 
+        
+        // Reset player position to center on mobile if needed (only if player exists)
+        if (typeof player !== 'undefined' && player && (window.innerWidth <= 768)) {
+            // Don't reset position, just ensure proper rendering
+            if (Math.abs(player.x) < 10 && Math.abs(player.y) < 10) {
+                // If player is at origin, keep them there (good for mobile)
+                player.x = 0;
+                player.y = 0;
+            }
+        }
+    }
+    window.addEventListener('resize', resize); resize();
+
+    // --- CONFIG ---
+    const RANKS = ["Luyện Khí", "Trúc Cơ", "Kim Đan", "Nguyên Anh", "Hóa Thần", "Đại Thừa", "Độ Kiếp"];
+    const SWORD_STYLES = [
+        { name: "Thiết Kiếm", colors: ["#666", "#ccc"], glow: '#999', shape: 'sword' },
+        { name: "Thanh Vân", colors: ["#004d40", "#00f2ff"], glow: '#00f2ff', shape: 'ice' },
+        { name: "Tử Điện", colors: ["#4b0082", "#bc13fe"], glow: '#bc13fe', shape: 'lightning' },
+        { name: "Xích Viêm", colors: ["#8b0000", "#ff3333"], glow: '#ff3333', shape: 'flame' },
+        { name: "Kim Quang", colors: ["#aa8800", "#ffd700"], glow: '#ffd700', shape: 'crystal' },
+        { name: "Thái Cực", colors: ["#000", "#fff"], glow: '#fff', shape: 'yin_yang' },
+        { name: "Hỗn Độn", colors: ["#111", "#444"], glow: '#888', shape: 'void' },
+        { name: "Phượng Hoàng", colors: ["#ff4500", "#ff69b4"], glow: '#ff69b4', shape: 'phoenix' },
+        { name: "Rồng Thiên", colors: ["#0066cc", "#00ccff"], glow: '#00ccff', shape: 'dragon' },
+        { name: "Huyết Ma", colors: ["#660000", "#cc0000"], glow: '#cc0000', shape: 'demon' }
+    ];
+
+    const SOUL_COLORS = [
+        { c: '#4a90e2', name: "Thanh Liên (Lam)", tier: 'basic', glow: 0.3 }, // Ice blue like first image
+        { c: '#e74c3c', name: "Hỏa Liên (Hồng)", tier: 'advanced', glow: 0.5 }, // Fire red like second image
+        { c: '#f39c12', name: "Kim Liên (Vàng)", tier: 'rare', glow: 0.7 }, // Golden like third image
+        { c: '#2ecc71', name: "Mộc Liên (Lục)", tier: 'epic', glow: 0.9 }, // Jade green like fourth image
+        { c: '#9b59b6', name: "Hỗn Nguyên (Tử)", tier: 'legendary', glow: 1.2 }, // Purple like fifth image
+        { c: '#e67e22', name: "Phượng Minh (Cam)", tier: 'mythic', glow: 1.5 } // Phoenix orange like sixth image
+    ];
+
+    const LIGHTNING_TIERS = [
+        { lv: 0, color: '#00f2ff', name: "Lam Lôi" }, // Xanh dương rực rỡ
+        { lv: 3, color: '#bc13fe', name: "Tử Tiêu Thần Lôi" }, // Tím ma thuật
+        { lv: 5, color: '#ffd700', name: "Kim Tiên Thần Lôi" }, // Vàng kim quý
+        { lv: 7, color: '#ff4500', name: "Huyết Sát Thần Lôi" }, // Cam đỏ rực rỡ
+        { lv: 9, color: '#ff69b4', name: "Phượng Hoàng Thần Lôi" } // Hồng phượng hoàng
+    ];
+
+    // AUDIO SYSTEM
+    const SOUNDS = {
+        lightning: 'music/Sound_TLBB/skill_leitingzhinu.wav',
+        skill1: 'music/Sound_TLBB/skill_houjibofa.wav', 
+        skill2: 'music/Sound_TLBB/skill_jinzhongzhao.wav',
+        skill3: 'music/Sound_TLBB/skill_mokewuliang.wav',
+        attack: 'music/Sound_TLBB/magic_attack_01.wav',
+        death: 'music/Sound_TLBB/nianshousiwang.wav',
+        levelup: 'music/Sound_TLBB/SuccessMRZ.wav',
+        bgMusic: 'music/Sound_TLBB/zhuti.mp3'
+    };
+
+    function playSound(soundKey) {
+        if(SOUNDS[soundKey]) {
+            try {
+                const audio = new Audio(SOUNDS[soundKey]);
+                audio.volume = 0.5;
+                audio.play().catch(e => console.log('Audio play failed:', e));
+            } catch(e) {
+                console.log('Audio error:', e);
+            }
+        }
+    }
+
+    // --- STATE ---
+    let state = {
+        isDead: false, isPaused: false, frame: 0, time: 0,
+        enemies: [], pickups: [], particles: [], projectiles: [], lightnings: [], enemyProjectiles: [],
+        kills: 0, keys: {}, mouse: { x: 0, y: 0, down: false }, cam: { x: 0, y: 0 },
+        bossActive: false, bossSpawned: false, gameSpeed: 1, currentOptions: [], safeTimer: 180, shake: 0,
+        screen: 'game'
+    };
+
+    // --- INPUT ---
+    let touchStartTime = 0;
+    let lastTapTime = 0;
+    let touchStartPos = { x: 0, y: 0 };
+    let isDragging = false;
+
+    window.addEventListener('keydown', e => {
+        state.keys[e.code] = true;
+        
+        // Enter key for artifact (PC shortcut)
+        if (e.code === 'Enter' && player && state.screen === 'game') {
+            player.useArtifact();
+            e.preventDefault();
+        }
+        
+        // Phím tắt cho cơ duyên (1-2-3)
+        if (state.screen === 'choice') {
+            if (e.code === 'Digit1' || e.code === 'Numpad1') {
+                document.querySelectorAll('.choice-card')[0]?.click();
+            }
+            if (e.code === 'Digit2' || e.code === 'Numpad2') {
+                document.querySelectorAll('.choice-card')[1]?.click();
+            }
+            if (e.code === 'Digit3' || e.code === 'Numpad3') {
+                document.querySelectorAll('.choice-card')[2]?.click();
+            }
+        }
+    });
+    
+    window.addEventListener('keyup', e => state.keys[e.code] = false);
+    
+    // Mouse events
+    window.addEventListener('mousedown', e => { 
+        if(e.button===0) state.mouse.down=true; 
+        if(e.button===2) { e.preventDefault(); if(player) player.useArtifact(); }
+    });
+    window.addEventListener('mouseup', e => state.mouse.down=false);
+    window.addEventListener('mousemove', e => { 
+        state.mouse.x = e.clientX; 
+        state.mouse.y = e.clientY; 
+    });
+    
+    // Touch events for mobile
+    window.addEventListener('touchstart', e => {
+        const touch = e.touches[0];
+        const target = e.target;
+        
+        // Don't interfere with button clicks and UI elements
+        if (target.tagName === 'BUTTON' || 
+            target.closest('button') || 
+            target.closest('.game-selector') ||
+            target.closest('#gm-btn') ||
+            target.closest('#gm-menu') ||
+            target.closest('.choice-card') ||
+            target.id === 'gm-btn' ||
+            target.classList.contains('btn-start') ||
+            target.classList.contains('gm-action') ||
+            target.classList.contains('choice-card') ||
+            target.classList.contains('game-nav-btn')) {
+            // Let these elements handle their own events
+            return;
+        }
+        
+        // Only prevent default for game area touches
+        e.preventDefault();
+        
+        touchStartTime = Date.now();
+        touchStartPos.x = touch.clientX;
+        touchStartPos.y = touch.clientY;
+        state.mouse.x = touch.clientX;
+        state.mouse.y = touch.clientY;
+        
+        // Check for double tap
+        const currentTime = Date.now();
+        if (currentTime - lastTapTime < 300) {
+            // Double tap detected - use artifact
+            if (player && state.screen === 'game') {
+                player.useArtifact();
+            }
+            lastTapTime = 0; // Reset to prevent triple tap
+        } else {
+            lastTapTime = currentTime;
+            // Only set mouse down if we're in game and not on UI elements
+            if (state.screen === 'game') {
+                state.mouse.down = true;
+                isDragging = true;
+            }
+        }
+    }, { passive: false });
+    
+    window.addEventListener('touchmove', e => {
+        if (isDragging && e.touches.length > 0) {
+            // Only prevent default when actually dragging in game
+            e.preventDefault();
+            const touch = e.touches[0];
+            state.mouse.x = touch.clientX;
+            state.mouse.y = touch.clientY;
+        }
+    }, { passive: false });
+    
+    window.addEventListener('touchend', e => {
+        if (isDragging) {
+            // Only prevent default when we were dragging
+            e.preventDefault();
+        }
+        state.mouse.down = false;
+        isDragging = false;
+    }, { passive: false });
+    
+    window.addEventListener('contextmenu', e => e.preventDefault());
+
+    // --- CENTRAL LOGIC: ENEMY DEATH ---
+    function handleEnemyKill(enemy, index) {
+        state.pickups.push({x: enemy.x, y: enemy.y, val: enemy.isBoss ? 1000 : 25});
+        state.kills++;
+        document.getElementById('kill-counter').innerText = `Diệt Ma: ${state.kills}`;
+        spawnParticles(enemy.x, enemy.y, 15, enemy.color, 4);
+        if (enemy.isBoss) {
+            state.bossActive = false;
+            notify("YÊU VƯƠNG ĐÃ DIỆT!");
+            state.shake = 60;
+            for(let i=0; i<10; i++) state.pickups.push({x: enemy.x + (Math.random()-0.5)*100, y: enemy.y + (Math.random()-0.5)*100, val: 100});
+        }
+        state.enemies.splice(index, 1);
+    }
+
+    // --- TIÊN NHÂN DESIGN ---
+    class Player {
+        constructor() {
+            this.x = 0; this.y = 0; this.radius = 20;
+            this.hp = 100; this.maxHp = 100;
+            this.xp = 0; this.maxXp = 20; this.level = 1; this.rankIdx = 0;
+            this.speed = 4.2; this.invulnTimer = 0; this.dashCd = 0; this.isDashing = false;
+            this.artifact = { cd: 0, maxCd: 600 };
+            this.weapons = { count: 1, tier: 0, dmg: 18, radius: 100, angle: 0, speed: 0.045, critChance: 0.1 };
+            this.skills = { lightning: 0, lightningCd: 0, voHon: 0, voHonCd: 0 };
+            this.soul = { level: 1, xp: 0, maxXp: 50, tierIdx: 0 };
+            this.facing = 0; this.floatAnim = 0;
+            
+            // Animation properties for TLBB-style realistic movement
+            this.walkCycle = 0; // Walking animation cycle
+            this.runCycle = 0; // Running cycle for faster movement
+            this.isMoving = false; // Track if character is moving
+            this.isRunning = false; // Track if running (faster movement)
+            this.armSwingL = 0; // Left arm swing animation
+            this.armSwingR = 0; // Right arm swing animation
+            this.legStepL = 0; // Left leg step animation
+            this.legStepR = 0; // Right leg step animation
+            this.bodyBob = 0; // Body bobbing when walking
+            this.headBob = 0; // Head subtle movement
+            this.robeFlow = 0; // Robe flowing animation
+            this.lastX = 0; this.lastY = 0; // Track previous position
+            this.moveSpeed = 0; // Current movement speed for animation scaling
+        }
+
+        update() {
+            if(state.isDead) return;
+            if(this.artifact.cd > 0) {
+                this.artifact.cd -= state.gameSpeed;
+                document.getElementById('artifact-cd-overlay').style.height = (this.artifact.cd / 600 * 100) + '%';
+                
+                // Update mobile bell indicator
+                const bellOverlay = document.getElementById('bell-cooldown-overlay');
+                const bellTimer = document.getElementById('bell-timer-text');
+                const bellIndicator = document.getElementById('mobile-bell-indicator');
+                if (bellOverlay && bellTimer && bellIndicator) {
+                    const cdPercent = (this.artifact.cd / 600) * 100;
+                    bellOverlay.style.height = cdPercent + '%';
+                    const secondsLeft = Math.ceil(this.artifact.cd / 60);
+                    bellTimer.textContent = secondsLeft + 's';
+                    bellIndicator.classList.remove('bell-ready');
+                }
+            } else {
+                // Bell is ready
+                const bellOverlay = document.getElementById('bell-cooldown-overlay');
+                const bellTimer = document.getElementById('bell-timer-text');
+                const bellIndicator = document.getElementById('mobile-bell-indicator');
+                if (bellOverlay && bellTimer && bellIndicator) {
+                    bellOverlay.style.height = '0%';
+                    bellTimer.textContent = 'SẴN SÀNG';
+                    bellIndicator.classList.add('bell-ready');
+                }
+            }
+
+            let dx = 0, dy = 0;
+            if(state.keys['KeyW'] || state.keys['ArrowUp']) dy = -1;
+            if(state.keys['KeyS'] || state.keys['ArrowDown']) dy = 1;
+            if(state.keys['KeyA'] || state.keys['ArrowLeft']) dx = -1;
+            if(state.keys['KeyD'] || state.keys['ArrowRight']) dx = 1;
+            
+            if(state.mouse.down) {
+                let mx = state.mouse.x - window.innerWidth/2; let my = state.mouse.y - window.innerHeight/2;
+                let len = Math.hypot(mx, my); if(len > 20) { dx = mx/len; dy = my/len; }
+            }
+            if(dx!==0 || dy!==0) { let len = Math.hypot(dx, dy); if(len > 1) { dx/=len; dy/=len; } this.facing = Math.atan2(dy, dx); }
+
+            if(this.dashCd > 0) this.dashCd -= state.gameSpeed;
+            if(state.keys['Space'] && this.dashCd <= 0 && (dx||dy)) { this.isDashing = true; this.dashCd = 60; spawnParticles(this.x, this.y, 20, '#fff', 5); }
+            if(this.isDashing && this.dashCd > 50) { dx*=3.5; dy*=3.5; } else { this.isDashing = false; }
+
+            this.x += dx * this.speed * state.gameSpeed; this.y += dy * this.speed * state.gameSpeed;
+            this.weapons.angle += this.weapons.speed * state.gameSpeed; this.floatAnim += 0.08 * state.gameSpeed;
+            if(this.invulnTimer > 0) this.invulnTimer -= state.gameSpeed;
+            
+            // Fix safeTimer countdown - player was permanently invincible!
+            if(state.safeTimer > 0) state.safeTimer -= state.gameSpeed;
+
+            // Update TLBB-style walking animation
+            let deltaX = this.x - this.lastX;
+            let deltaY = this.y - this.lastY;
+            let moveDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            this.moveSpeed = moveDistance;
+            this.isMoving = moveDistance > 0.1;
+            this.isRunning = moveDistance > 2; // Running when moving fast
+            
+            if(this.isMoving) {
+                let animSpeed = this.isRunning ? 0.25 : 0.12;
+                this.walkCycle += animSpeed * state.gameSpeed;
+                this.runCycle += 0.3 * state.gameSpeed;
+                
+                // TLBB-style arm swings (opposite to legs)
+                this.armSwingL = Math.sin(this.walkCycle) * (this.isRunning ? 0.6 : 0.4);
+                this.armSwingR = Math.sin(this.walkCycle + Math.PI) * (this.isRunning ? 0.6 : 0.4);
+                
+                // TLBB-style leg steps (realistic gait)
+                this.legStepL = Math.sin(this.walkCycle) * (this.isRunning ? 0.8 : 0.5);
+                this.legStepR = Math.sin(this.walkCycle + Math.PI) * (this.isRunning ? 0.8 : 0.5);
+                
+                // Body bob (TLBB characters have subtle bob)
+                this.bodyBob = Math.abs(Math.sin(this.walkCycle * 2)) * (this.isRunning ? 4 : 2);
+                this.headBob = Math.sin(this.walkCycle * 2) * (this.isRunning ? 2 : 1);
+                
+                // Robe flowing with movement
+                this.robeFlow = Math.sin(this.walkCycle * 0.8) * (this.isRunning ? 8 : 4);
+            } else {
+                // Gradually return to idle pose
+                this.armSwingL *= 0.85;
+                this.armSwingR *= 0.85;
+                this.legStepL *= 0.85;
+                this.legStepR *= 0.85;
+                this.bodyBob *= 0.9;
+                this.headBob *= 0.9;
+                this.robeFlow *= 0.92;
+            }
+            
+            this.lastX = this.x;
+            this.lastY = this.y;
+
+            this.updateWeapons(); this.updateSkills();
+
+            for(let i=state.pickups.length-1; i>=0; i--) {
+                let p = state.pickups[i]; let dist = Math.hypot(p.x - this.x, p.y - this.y);
+                if(dist < 180) { p.x += (this.x-p.x)*0.2 * state.gameSpeed; p.y += (this.y-p.y)*0.2 * state.gameSpeed; }
+                if(dist < 25) { this.gainXp(p.val); state.pickups.splice(i, 1); if(state.isPaused) break; }
+            }
+        }
+
+        useArtifact() {
+            if(this.artifact.cd <= 0) {
+                this.artifact.cd = 600; state.shake = 35; spawnParticles(this.x, this.y, 80, 'gold', 12);
+                for (let i = state.enemies.length - 1; i >= 0; i--) {
+                    let e = state.enemies[i];
+                    if(Math.hypot(e.x - this.x, e.y - this.y) < 850) {
+                        if(e.takeHit(300 + (this.level * 20), this.x, this.y, 30)) handleEnemyKill(e, i);
+                    }
+                }
+                notify("ĐÔNG HOÀNG CHUÔNG!");
+            }
+        }
+
+        updateWeapons() {
+            let orbitRadius = this.weapons.radius + (this.weapons.tier * 20);
+            for(let i=0; i<this.weapons.count; i++) {
+                let ang = this.weapons.angle + (Math.PI*2/this.weapons.count)*i;
+                let wx = this.x + Math.cos(ang)*orbitRadius; let wy = this.y + Math.sin(ang)*orbitRadius;
+                for (let j = state.enemies.length - 1; j >= 0; j--) {
+                    let e = state.enemies[j];
+                    if(Math.hypot(e.x - wx, e.y - wy) < e.radius + 35) {
+                        if(e.takeHit(this.weapons.dmg * (1 + this.weapons.tier*0.3), this.x, this.y)) handleEnemyKill(e, j);
+                    }
+                }
+            }
+        }
+
+        updateSkills() {
+            if(this.skills.lightning > 0) {
+                if(this.skills.lightningCd > 0) this.skills.lightningCd -= state.gameSpeed;
+                else {
+                    let range = 450 + (this.skills.lightning * 50);
+                    let target = getNearestEnemy(this.x, this.y, range);
+                    if(target) {
+                        let visual = LIGHTNING_TIERS[0];
+                        for (let t of LIGHTNING_TIERS) { if (this.skills.lightning >= t.lv) visual = t; }
+                        let idx = state.enemies.indexOf(target);
+                        if(target.takeHit(70 + (this.skills.lightning * 40), 0, 0)) { if(idx !== -1) handleEnemyKill(target, idx); }
+                    state.lightnings.push({
+                        x1: this.x, y1: this.y - 60, x2: target.x, y2: target.y, 
+                        color: visual.color, life: 8, tier: this.skills.lightning // Giảm life để ít giật
+                    });
+                    this.skills.lightningCd = Math.max(8, 45 - (this.skills.lightning * 4));
+                    
+                    // Play lightning sound and show seal
+                    playSound('lightning');
+                    state.particles.push({
+                        x: this.x, y: this.y - 60, life: 45, type: 'lightning-seal',
+                        tier: this.skills.lightning, scale: 1.0
+                    });
+                    }
+                }
+            }
+            if(this.skills.voHon > 0) {
+                if(this.skills.voHonCd > 0) this.skills.voHonCd -= state.gameSpeed;
+                else {
+                    let target = getNearestEnemy(this.x, this.y, 700);
+                    if(target) {
+                        let spiritY = Math.sin(this.floatAnim) * 10 - 50;
+                        let spawnX = this.x - 35; let spawnY = this.y + spiritY + 15;
+                        let ang = Math.atan2(target.y - spawnY, target.x - spawnX);
+                        let color = SOUL_COLORS[Math.min(this.soul.tierIdx, 3)].c;
+                        state.projectiles.push(new Projectile(spawnX, spawnY, ang, color, 30 + (this.soul.level * 8))); 
+                        this.skills.voHonCd = Math.max(5, 25 - (this.skills.voHon * 3));
+                        this.gainSoulXp(1); 
+                    }
+                }
+            }
+        }
+
+        draw(ctx) {
+            console.log("Player.draw() called - TLBB style should render now");
+            
+            // Declare variables at function start to avoid duplicates
+            let auraSize, tierColor;
+            
+            ctx.save(); ctx.translate(this.x, this.y);
+            
+            // Always show Bát Quái Trận Pháp and auras
+            ctx.save(); ctx.rotate(state.frame * 0.02); ctx.globalAlpha = 0.2; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.arc(0,0, 40, 0, Math.PI*2); ctx.stroke();
+            for(let i=0; i<8; i++) { ctx.rotate(Math.PI/4); ctx.beginPath(); ctx.moveTo(30, 0); ctx.lineTo(40, 0); ctx.stroke(); }
+            ctx.restore();
+
+            if((this.invulnTimer > 0 || state.safeTimer > 0) && Math.floor(state.frame/4)%2===0) ctx.globalAlpha = 0.4;
+            
+            // Võ Hồn: U Minh Thanh Liên - ALWAYS SHOW
+            if (this.skills.voHon > 0) {
+                let spiritY = Math.sin(this.floatAnim) * 10 - 50;
+                let color = SOUL_COLORS[Math.min(this.soul.tierIdx, 3)].c;
+                drawSpectralLotus(ctx, -40, spiritY + 15, 15 + this.soul.tierIdx, color, state.frame);
+            }
+            
+            // Lightning aura and effects - ALWAYS SHOW
+            auraSize = 40 + Math.sin(this.floatAnim)*8;
+            tierColor = LIGHTNING_TIERS.find(t => t.lv <= this.skills.lightning) || LIGHTNING_TIERS[0];
+            
+            if(this.skills.lightning > 0) {
+                ctx.fillStyle = `rgba(${parseInt(tierColor.color.slice(1,3), 16)}, ${parseInt(tierColor.color.slice(3,5), 16)}, ${parseInt(tierColor.color.slice(5,7), 16)}, 0.15)`;
+                ctx.beginPath(); 
+                ctx.arc(0, 0, auraSize + 10, 0, Math.PI*2); 
+                ctx.fill();
+                
+                // Lightning particles around character
+                for(let i = 0; i < 6; i++) {
+                    let angle = (i / 6) * Math.PI * 2 + state.frame * 0.02;
+                    let r = auraSize + Math.sin(state.frame * 0.08 + i) * 8;
+                    let px = Math.cos(angle) * r;
+                    let py = Math.sin(angle) * r;
+                    
+                    ctx.beginPath();
+                    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+                    ctx.fillStyle = tierColor.color;
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = tierColor.color;
+                    ctx.globalAlpha = 0.8;
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+            }
+            
+            // Basic cultivation aura
+            ctx.fillStyle = this.rankIdx > 3 ? 'rgba(255,215,0,0.12)' : 'rgba(0,242,255,0.1)';
+            ctx.beginPath(); ctx.arc(0,0,auraSize,0,Math.PI*2); ctx.fill();
+            
+            // Always show weapons/swords even with 3D model
+            if (playerModel) {
+                // Only draw weapons, skip character body
+                ctx.restore(); 
+                this.drawWeapons(ctx);
+                return;
+            }
+            
+            // Bát Quái Trận Pháp
+            ctx.save(); ctx.rotate(state.frame * 0.02); ctx.globalAlpha = 0.2; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.arc(0,0, 40, 0, Math.PI*2); ctx.stroke();
+            for(let i=0; i<8; i++) { ctx.rotate(Math.PI/4); ctx.beginPath(); ctx.moveTo(30, 0); ctx.lineTo(40, 0); ctx.stroke(); }
+            ctx.restore();
+
+            if((this.invulnTimer > 0 || state.safeTimer > 0) && Math.floor(state.frame/4)%2===0) ctx.globalAlpha = 0.4;
+            
+            // Võ Hồn: U Minh Thanh Liên
+            if (this.skills.voHon > 0) {
+                let spiritY = Math.sin(this.floatAnim) * 10 - 50;
+                let color = SOUL_COLORS[Math.min(this.soul.tierIdx, 3)].c;
+                drawSpectralLotus(ctx, -40, spiritY + 15, 15 + this.soul.tierIdx, color, state.frame);
+            }
+
+            // TLBB-Style Realistic Character Rendering
+            // Using auraSize and tierColor from above
+            
+            // Lightning aura around character (changes with lightning tier)
+            if(this.skills.lightning > 0) {
+                ctx.fillStyle = `rgba(${parseInt(tierColor.color.slice(1,3), 16)}, ${parseInt(tierColor.color.slice(3,5), 16)}, ${parseInt(tierColor.color.slice(5,7), 16)}, 0.15)`;
+                ctx.beginPath(); 
+                ctx.arc(0, 0, auraSize + 10, 0, Math.PI*2); 
+                ctx.fill();
+                
+                // Lightning particles around character
+                for(let i = 0; i < 6; i++) {
+                    let angle = (i / 6) * Math.PI * 2 + state.frame * 0.02;
+                    let r = auraSize + Math.sin(state.frame * 0.08 + i) * 8;
+                    let px = Math.cos(angle) * r;
+                    let py = Math.sin(angle) * r;
+                    
+                    ctx.beginPath();
+                    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+                    ctx.fillStyle = tierColor.color;
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = tierColor.color;
+                    ctx.globalAlpha = 0.8;
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+            }
+            
+            // Basic cultivation aura
+            ctx.fillStyle = this.rankIdx > 3 ? 'rgba(255,215,0,0.12)' : 'rgba(0,242,255,0.1)';
+            ctx.beginPath(); ctx.arc(0,0,auraSize,0,Math.PI*2); ctx.fill();
+
+            // Face the movement direction (TLBB style)
+            let rotationAngle = this.facing + Math.PI/2;
+            ctx.rotate(rotationAngle);
+            
+            // Body position with TLBB-style walking bob
+            let bodyOffsetY = -this.bodyBob;
+            let headOffsetY = bodyOffsetY - 35 + this.headBob * 0.5;
+            
+            // === LEGS (CHÂN) - TLBB Proportions ===
+            ctx.save();
+            ctx.translate(0, bodyOffsetY + 28);
+            
+            // Left leg (TLBB style - more realistic proportions)
+            ctx.save();
+            ctx.translate(-8, 0);
+            ctx.rotate(this.legStepL * 0.6); // Less exaggerated movement
+            
+            // Left thigh
+            ctx.fillStyle = '#2c3e50'; // TLBB-style dark pants
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = '#1a252f';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 5, 18, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Left lower leg
+            ctx.save();
+            ctx.translate(0, 16);
+            ctx.rotate(Math.max(0, this.legStepL * 0.4)); // Knee bend only forward
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 4, 16, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Left foot (TLBB-style boots)
+            ctx.translate(0, 14);
+            ctx.fillStyle = '#8B4513'; // Brown leather boots
+            ctx.shadowBlur = 3;
+            ctx.beginPath();
+            ctx.ellipse(3, 0, 8, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            ctx.restore();
+            
+            // Right leg
+            ctx.save();
+            ctx.translate(8, 0);
+            ctx.rotate(this.legStepR * 0.6);
+            
+            // Right thigh
+            ctx.fillStyle = '#2c3e50';
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = '#1a252f';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 5, 18, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Right lower leg
+            ctx.save();
+            ctx.translate(0, 16);
+            ctx.rotate(Math.max(0, this.legStepR * 0.4));
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 4, 16, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Right foot
+            ctx.translate(0, 14);
+            ctx.fillStyle = '#8B4513';
+            ctx.shadowBlur = 3;
+            ctx.beginPath();
+            ctx.ellipse(3, 0, 8, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            ctx.restore();
+            
+            ctx.restore();
+            
+            // === BODY (THÂN) - TLBB Style ===
+            ctx.save();
+            ctx.translate(0, bodyOffsetY);
+            
+            // TLBB-style torso (more realistic proportions)
+            ctx.fillStyle = '#fdbcb4'; // Skin tone
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = '#deb887';
+            ctx.beginPath(); 
+            ctx.ellipse(0, 8, 14, 22, 0, 0, Math.PI * 2); 
+            ctx.fill();
+            
+            // Inner clothing
+            ctx.fillStyle = '#f0f8ff'; // Light inner shirt
+            ctx.beginPath();
+            ctx.ellipse(0, 8, 11, 18, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+            
+            // === ARMS (TAY) - TLBB Realistic Movement ===
+            ctx.save();
+            ctx.translate(0, bodyOffsetY - 2);
+            
+            // Left arm
+            ctx.save();
+            ctx.translate(-17, 8);
+            ctx.rotate(this.armSwingL);
+            
+            // Left shoulder/upper arm
+            ctx.fillStyle = '#fdbcb4';
+            ctx.shadowBlur = 4;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 5, 16, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Left forearm
+            ctx.save();
+            ctx.translate(0, 14);
+            ctx.rotate(this.isMoving ? Math.sin(this.walkCycle * 1.2) * 0.15 : 0);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 4, 14, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Left hand
+            ctx.translate(0, 12);
+            ctx.beginPath();
+            ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            ctx.restore();
+            
+            // Right arm
+            ctx.save();
+            ctx.translate(17, 8);
+            ctx.rotate(this.armSwingR);
+            
+            // Right shoulder/upper arm
+            ctx.fillStyle = '#fdbcb4';
+            ctx.shadowBlur = 4;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 5, 16, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Right forearm
+            ctx.save();
+            ctx.translate(0, 14);
+            ctx.rotate(this.isMoving ? Math.sin(this.walkCycle * 1.2 + Math.PI) * 0.15 : 0);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 4, 14, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Right hand
+            ctx.translate(0, 12);
+            ctx.beginPath();
+            ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            ctx.restore();
+            
+            ctx.restore();
+            
+            // === TLBB-STYLE ROBES (TÀ ÁO) === 
+            ctx.save();
+            ctx.translate(0, bodyOffsetY);
+            
+            // Outer robe (TLBB ancient Chinese style)
+            ctx.fillStyle = '#ffffff'; 
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#87ceeb';
+            ctx.globalAlpha = 0.95;
+            
+            ctx.beginPath(); 
+            // Flowing robe with physics-like movement
+            let robeFlowL = this.robeFlow * 0.8;
+            let robeFlowR = this.robeFlow * -0.6;
+            
+            ctx.moveTo(-22 + robeFlowL, -8); 
+            ctx.quadraticCurveTo(-30 + robeFlowL, 18, -20 + robeFlowL, 40 + Math.sin(state.frame*0.06)*4);
+            ctx.quadraticCurveTo(0, 48 + Math.sin(state.frame*0.08)*6, 20 + robeFlowR, 40 + Math.sin(state.frame*0.06)*4);
+            ctx.quadraticCurveTo(30 + robeFlowR, 18, 22 + robeFlowR, -8);
+            ctx.quadraticCurveTo(0, -12, -22 + robeFlowL, -8);
+            ctx.fill();
+            
+            // Robe sash/belt
+            ctx.fillStyle = '#DAA520'; // Golden sash
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = '#B8860B';
+            ctx.beginPath();
+            ctx.ellipse(0, 15, 18, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Decorative elements
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(-8, 15, 2, 0, Math.PI * 2);
+            ctx.arc(8, 15, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.globalAlpha = 1;
+            ctx.restore();
+            
+            // === HEAD (ĐẦU) - TLBB Detailed Face ===
+            ctx.save();
+            ctx.translate(0, headOffsetY);
+            
+            // Head base
+            ctx.fillStyle = '#fdbcb4'; 
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = '#deb887';
+            ctx.beginPath(); 
+            ctx.arc(0, 0, 13, 0, Math.PI*2); 
+            ctx.fill();
+            
+            // TLBB-style hair (more detailed)
+            ctx.fillStyle = '#2c1810'; 
+            ctx.shadowBlur = 3;
+            ctx.beginPath(); 
+            ctx.arc(0, -2, 15, 0, Math.PI*2); 
+            ctx.fill();
+            
+            // Hair details (TLBB ancient style)
+            ctx.beginPath();
+            ctx.arc(-8, -8, 5, 0, Math.PI*2);
+            ctx.arc(8, -8, 5, 0, Math.PI*2);
+            ctx.fill();
+            
+            // TLBB golden hair ornaments (more elaborate)
+            ctx.fillStyle = '#FFD700';
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(-9, -10, 3, 0, Math.PI * 2);
+            ctx.arc(9, -10, 3, 0, Math.PI * 2);
+            ctx.arc(0, -14, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Central ornament detail
+            ctx.fillStyle = '#FF6347'; // Red gem in center
+            ctx.beginPath();
+            ctx.arc(0, -14, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // TLBB detailed facial features
+            // Eyes
+            ctx.fillStyle = this.skills.lightning > 5 ? tierColor.color : '#4169E1';
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = ctx.fillStyle;
+            ctx.beginPath(); 
+            ctx.arc(-4, 2, 2, 0, Math.PI*2); 
+            ctx.arc(4, 2, 2, 0, Math.PI*2); 
+            ctx.fill();
+            
+            // Eye pupils
+            ctx.fillStyle = '#000000';
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.arc(-4, 2, 1, 0, Math.PI*2);
+            ctx.arc(4, 2, 1, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Eyebrows
+            ctx.strokeStyle = '#2c1810';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(-4, 0, 3, 0.2, Math.PI - 0.2);
+            ctx.arc(4, 0, 3, 0.2, Math.PI - 0.2);
+            ctx.stroke();
+            
+            // Nose
+            ctx.fillStyle = '#e6a373';
+            ctx.beginPath();
+            ctx.arc(0, 4, 1.2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Mouth
+            ctx.strokeStyle = '#d4956b';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(0, 7, 3, 0.1, Math.PI - 0.1);
+            ctx.stroke();
+            
+            ctx.restore();
+            
+            ctx.restore(); ctx.globalAlpha = 1; this.drawWeapons(ctx);
+        }
+
+        drawWeapons(ctx) {
+            if(state.isDead) return;
+            let style = SWORD_STYLES[Math.min(this.weapons.tier, SWORD_STYLES.length - 1)];
+            let orbitRadius = this.weapons.radius + (this.weapons.tier * 20);
+            for(let i=0; i<this.weapons.count; i++) {
+                let ang = this.weapons.angle + (Math.PI*2/this.weapons.count)*i;
+                let wx = this.x + Math.cos(ang)*orbitRadius; let wy = this.y + Math.sin(ang)*orbitRadius;
+                drawCultivationSword(ctx, wx, wy, ang + Math.PI/2, style, this.weapons.tier);
+            }
+        }
+
+        addSword() { this.weapons.count++; if(this.weapons.count > 15) this.evolve(); else notify(`PHI KIẾM: ${this.weapons.count}/15`); updateHud(); }
+        evolve() { this.weapons.count = 1; this.weapons.tier++; this.weapons.dmg *= 1.4; notify(`ĐỘT PHÁ KIẾM CẢNH: ${SWORD_STYLES[this.weapons.tier].name}!`); state.shake = 30; spawnParticles(this.x, this.y, 100, '#00f2ff', 6); }
+        takeDamage(dmg) { if(this.isDashing || this.invulnTimer > 0 || state.safeTimer > 0 || state.isDead) return; this.hp -= dmg; state.shake = 8; if(this.hp < 0) this.hp = 0; this.invulnTimer = 35; spawnText(this.x, this.y-25, `-${Math.floor(dmg)}`, '#f00'); updateHud(); if(this.hp <= 0) gameOver(); }
+        gainXp(amt) { if(state.isDead || state.isPaused) return false; this.xp += amt; if(this.xp >= this.maxXp) { this.xp -= this.maxXp; this.level++; this.maxXp = Math.floor(this.maxXp*1.35); this.hp = this.maxHp; if(this.level%10===0 && this.rankIdx<RANKS.length-1) { this.rankIdx++; notify(`ĐỘT PHÁ CẢNH GIỚI: ${RANKS[this.rankIdx]}!`); state.shake = 30; } state.isPaused = true; showUpgrade(); updateHud(); return true; } updateHud(); return false; }
+        gainSoulXp(amt) { if(this.skills.voHon === 0) return; this.soul.xp += amt; if(this.soul.xp >= this.soul.maxXp) { this.soul.xp = 0; this.soul.level++; this.soul.maxXp = Math.floor(this.soul.maxXp * 1.25); if (this.soul.level > 15) this.soul.tierIdx = 3; else if (this.soul.level > 10) this.soul.tierIdx = 2; else if (this.soul.level > 5) this.soul.tierIdx = 1; updateHud(); } }
+    }
+
+    // --- ENEMY DESIGN (MONSTERS) ---
+    class Enemy {
+        constructor(x, y, type) {
+            this.x = x; this.y = y; this.type = type; 
+            // Improved difficulty scaling based on player progression (phi kiếm power)
+            let timeDiff = Math.min(2, state.frame / 1800); // Time scaling reduced
+            let swordPowerDiff = player ? (1 + player.weapons.tier * 0.8 + player.weapons.count * 0.1) : 1; // Phi kiếm tier và count scaling
+            let weaponDmgDiff = player ? (1 + Math.log10(player.weapons.dmg) * 0.3) : 1; // Weapon damage scaling 
+            let levelDiff = player ? (1 + player.level * 0.05) : 1; // Level scaling reduced
+            let diff = timeDiff * swordPowerDiff * weaponDmgDiff * levelDiff;
+            
+            this.hp = 50 * diff; this.speed = 2.2; this.radius = 20; this.isBoss = (type === 10); // Boss now type 10
+            this.isElite = (type >= 6 && type <= 9); // Elite enemies with swords
+            this.isRanged = (type === 4 || type === 5); // Ranged enemies
+            
+            if (type === 0) { this.hp = 40 * diff; this.color = '#fff'; this.name = "Quỷ Hỏa"; }
+            if (type === 1) { this.hp = 40 * diff; this.speed = 3.8; this.color = '#bc13fe'; this.name = "Độc Thủ"; }
+            if (type === 2) { this.hp = 200 * diff; this.speed = 1.4; this.radius = 30; this.color = '#8b0000'; this.name = "Hắc Quy"; }
+            if (type === 3) { this.hp = 60 * diff; this.speed = 2.5; this.color = '#a9a9a9'; this.name = "Vô Diện"; }
+            
+            // Ranged enemies that can shoot projectiles
+            if (type === 4) { // Pháp Sư - Mage archer
+                this.hp = 80 * diff; this.speed = 1.8; this.radius = 22; this.color = '#4B0082'; this.name = "Pháp Sư";
+                this.isRanged = true; this.shootCd = 0; this.shootRange = 400; this.projectileDamage = 20 * diff;
+            }
+            if (type === 5) { // Cung Thủ - Skilled archer  
+                this.hp = 70 * diff; this.speed = 2.0; this.radius = 20; this.color = '#228B22'; this.name = "Cung Thủ";
+                this.isRanged = true; this.shootCd = 0; this.shootRange = 450; this.projectileDamage = 15 * diff;
+            }
+            
+            // Ranged enemies that can shoot projectiles
+            if (type === 4) { // Pháp Sư - Mage archer
+                this.hp = 80 * diff; this.speed = 1.8; this.radius = 22; this.color = '#4B0082'; this.name = "Pháp Sư";
+                this.isRanged = true; this.shootCd = 0; this.shootRange = 400; this.projectileDamage = 20 * diff;
+            }
+            if (type === 5) { // Cung Thủ - Skilled archer  
+                this.hp = 70 * diff; this.speed = 2.0; this.radius = 20; this.color = '#228B22'; this.name = "Cung Thủ";
+                this.isRanged = true; this.shootCd = 0; this.shootRange = 450; this.projectileDamage = 15 * diff;
+            }
+            
+            // Elite enemies with weapon systems
+            if (type === 6) { // Kiếm Nô
+                this.hp = 150 * diff; this.speed = 2.0; this.radius = 25; this.color = '#4169E1'; this.name = "Kiếm Nô";
+                this.weapons = { count: 2, tier: Math.min(2, Math.floor(diff * 0.3)), dmg: 30 * diff, radius: 40, angle: 0, attackCd: 0 };
+            }
+            if (type === 7) { // Ma Kiếm
+                this.hp = 120 * diff; this.speed = 2.8; this.radius = 22; this.color = '#8A2BE2'; this.name = "Ma Kiếm";
+                this.weapons = { count: 3, tier: Math.min(1, Math.floor(diff * 0.2)), dmg: 25 * diff, radius: 35, angle: 0, attackCd: 0 };
+            }
+            if (type === 8) { // Thiết Vệ
+                this.hp = 300 * diff; this.speed = 1.5; this.radius = 35; this.color = '#708090'; this.name = "Thiết Vệ";
+                this.weapons = { count: 4, tier: Math.min(2, Math.floor(diff * 0.4)), dmg: 40 * diff, radius: 50, angle: 0, attackCd: 0 };
+            }
+            if (type === 9) { // Hộ Pháp
+                this.hp = 180 * diff; this.speed = 2.3; this.radius = 28; this.color = '#DAA520'; this.name = "Hộ Pháp";
+                this.weapons = { count: 6, tier: Math.min(3, Math.floor(diff * 0.5)), dmg: 35 * diff, radius: 45, angle: 0, attackCd: 0 };
+            }
+            
+            if (this.isBoss) { 
+                this.hp = 6000 * diff; this.maxHp = this.hp; this.radius = 70; this.color = '#ff0000'; this.name = "Huyết Ma";
+                // Boss weapon system
+                this.weapons = {
+                    count: Math.min(8, 3 + Math.floor(diff)), // Boss starts with multiple swords
+                    tier: Math.min(3, Math.floor(diff * 0.5)), // Boss tier based on difficulty
+                    dmg: 80 * diff, // Boss sword damage
+                    radius: 80, // Boss sword orbit radius
+                    angle: 0, // Rotation angle
+                    attackCd: 0 // Attack cooldown
+                };
+            }
+            this.maxHp = this.hp; this.pushX = 0; this.pushY = 0; this.atkCd = 0; this.anim = Math.random() * Math.PI;
+        }
+        update() {
+            if(state.isDead || state.isPaused) return;
+            let dx = player.x - this.x; let dy = player.y - this.y; let dist = Math.hypot(dx, dy);
+            
+            // Ranged enemy behavior
+            if(this.isRanged) {
+                // Keep optimal distance for shooting
+                let optimalDist = this.shootRange * 0.7;
+                if(dist > optimalDist + 50) {
+                    // Move closer if too far
+                    let len = Math.hypot(dx, dy);
+                    this.x += (dx/len*this.speed + this.pushX) * state.gameSpeed;
+                    this.y += (dy/len*this.speed + this.pushY) * state.gameSpeed;
+                } else if(dist < optimalDist - 50) {
+                    // Move away if too close  
+                    let len = Math.hypot(dx, dy);
+                    this.x -= (dx/len*this.speed + this.pushX) * state.gameSpeed;
+                    this.y -= (dy/len*this.speed + this.pushY) * state.gameSpeed;
+                }
+                
+                // Shoot at player
+                this.shootCd -= state.gameSpeed;
+                if(this.shootCd <= 0 && dist <= this.shootRange) {
+                    let angle = Math.atan2(dy, dx);
+                    let projColor = this.type === 4 ? '#8A2BE2' : '#32CD32'; // Purple for mage, green for archer
+                    state.enemyProjectiles.push(new EnemyProjectile(this.x, this.y, angle, projColor, this.projectileDamage));
+                    this.shootCd = this.type === 4 ? 80 : 60; // Mage shoots slower but stronger
+                    spawnParticles(this.x, this.y, 6, projColor, 2);
+                }
+                
+                // Light melee attack if player gets too close
+                if(dist < this.radius + player.radius && this.atkCd <= 0) {
+                    player.takeDamage(10); // Weak melee for ranged enemies
+                    this.atkCd = 90;
+                }
+            } else {
+                // Normal melee movement
+                if(dist > 0) { 
+                    let len = Math.hypot(dx, dy); 
+                    this.x += (dx/len*this.speed + this.pushX) * state.gameSpeed; 
+                    this.y += (dy/len*this.speed + this.pushY) * state.gameSpeed; 
+                }
+                
+                // Normal melee attack
+                if(dist < this.radius + player.radius && this.atkCd <= 0) { 
+                    let meleeDamage = this.isBoss ? 45 : (this.isElite ? 25 : 18);
+                    player.takeDamage(meleeDamage); 
+                    this.atkCd = 60; 
+                }
+            }
+            
+            this.pushX *= 0.88; this.pushY *= 0.88;
+            if(this.atkCd > 0) this.atkCd -= state.gameSpeed;
+            
+            // Elite and Boss weapon system
+            if((this.isBoss || this.isElite) && this.weapons) {
+                this.weapons.angle += (this.isBoss ? 0.05 : 0.08) * state.gameSpeed;
+                this.weapons.attackCd -= state.gameSpeed;
+                
+                for(let i=0; i<this.weapons.count; i++) {
+                    let ang = this.weapons.angle + (Math.PI*2/this.weapons.count)*i;
+                    let wx = this.x + Math.cos(ang)*this.weapons.radius; 
+                    let wy = this.y + Math.sin(ang)*this.weapons.radius;
+                    let swordDist = Math.hypot(player.x - wx, player.y - wy);
+                    let swordDamageMultiplier = this.isBoss ? 0.3 : 0.2;
+                    let attackCooldown = this.isBoss ? 45 : 35;
+                    
+                    if(swordDist < 25 && this.weapons.attackCd <= 0) {
+                        player.takeDamage(this.weapons.dmg * swordDamageMultiplier);
+                        this.weapons.attackCd = attackCooldown;
+                        spawnParticles(wx, wy, 6, this.color, 2);
+                        break;
+                    }
+                }
+            }
+            
+            this.anim += 0.1 * state.gameSpeed;
+        }
+        draw(ctx) {
+            ctx.save(); ctx.translate(this.x, this.y);
+            let s = 1 + Math.sin(this.anim)*0.08; ctx.scale(s, s); ctx.shadowBlur = 20; ctx.shadowColor = this.color; ctx.fillStyle = '#0a0a0a'; ctx.strokeStyle = this.color; ctx.lineWidth = 3;
+            if (this.type === 0) { // Quỷ hỏa uốn lượn
+                ctx.beginPath(); ctx.moveTo(0, -this.radius); ctx.bezierCurveTo(this.radius, -this.radius, this.radius, this.radius, 0, this.radius); ctx.bezierCurveTo(-this.radius, this.radius, -this.radius, -this.radius, 0, -this.radius); ctx.fill(); ctx.stroke();
+                ctx.fillStyle='red'; ctx.beginPath(); ctx.arc(-6,-4,4,0,Math.PI*2); ctx.arc(6,-4,4,0,Math.PI*2); ctx.fill();
+            } else if (this.type === 1) { // Độc thủ - Bàn tay ma
+                ctx.rotate(Math.atan2(player.y-this.y, player.x-this.x) - Math.PI/2);
+                ctx.beginPath(); ctx.moveTo(-10, 20); ctx.lineTo(-15, -10); ctx.lineTo(-8, -20); ctx.lineTo(0, -5); ctx.lineTo(8, -20); ctx.lineTo(15, -10); ctx.lineTo(10, 20); ctx.closePath(); ctx.fill(); ctx.stroke();
+            } else if (this.type === 3) { // Vô Diện - fast ghost
+                ctx.beginPath(); ctx.arc(0,0,this.radius,0,Math.PI*2); ctx.fill(); ctx.stroke();
+                ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(-6,-6,3,0,Math.PI*2); ctx.arc(6,-6,3,0,Math.PI*2); ctx.fill();
+            } else if (this.type === 4) { // Pháp Sư - Mage archer
+                ctx.beginPath(); for(let i=0; i<6; i++){ let a = Math.PI*2/6*i; ctx.lineTo(Math.cos(a)*this.radius, Math.sin(a)*this.radius); } ctx.closePath(); ctx.fill(); ctx.stroke();
+                ctx.fillStyle='#8A2BE2'; ctx.beginPath(); ctx.arc(-7,-7,4,0,Math.PI*2); ctx.arc(7,-7,4,0,Math.PI*2); ctx.fill();
+                // Magic staff visual
+                ctx.strokeStyle='#8A2BE2'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(0,-this.radius); ctx.lineTo(0,-this.radius-15); ctx.stroke();
+                ctx.fillStyle='#FF69B4'; ctx.beginPath(); ctx.arc(0,-this.radius-15,5,0,Math.PI*2); ctx.fill();
+            } else if (this.type === 5) { // Cung Thủ - Archer
+                ctx.beginPath(); ctx.moveTo(0,-this.radius); for(let i=1; i<8; i++){ let a = Math.PI*2/8*i; ctx.lineTo(Math.cos(a)*this.radius, Math.sin(a)*this.radius); } ctx.closePath(); ctx.fill(); ctx.stroke();
+                ctx.fillStyle='#228B22'; ctx.beginPath(); ctx.arc(-6,-6,3,0,Math.PI*2); ctx.arc(6,-6,3,0,Math.PI*2); ctx.fill();
+                // Bow visual
+                ctx.strokeStyle='#8B4513'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(-8,0,12,Math.PI*0.7,Math.PI*1.3,false); ctx.stroke();
+                ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(-14,-8); ctx.lineTo(-14,8); ctx.stroke();
+            } else if (this.type === 6) { // Kiếm Nô - Warrior with sword aura
+                ctx.beginPath(); ctx.rect(-this.radius, -this.radius, this.radius*2, this.radius*2); ctx.fill(); ctx.stroke();
+                ctx.fillStyle=this.color; ctx.beginPath(); ctx.arc(-8,-8,3,0,Math.PI*2); ctx.arc(8,-8,3,0,Math.PI*2); ctx.fill();
+                ctx.strokeStyle=this.color; ctx.beginPath(); ctx.moveTo(0,-5); ctx.lineTo(0,5); ctx.moveTo(-8,0); ctx.lineTo(8,0); ctx.stroke();
+            } else if (this.type === 7) { // Ma Kiếm - Demonic swordsman
+                ctx.beginPath(); for(let i=0; i<5; i++){ let a = Math.PI*2/5*i - Math.PI/2; ctx.lineTo(Math.cos(a)*this.radius, Math.sin(a)*this.radius); } ctx.closePath(); ctx.fill(); ctx.stroke();
+                ctx.fillStyle='#ff6600'; ctx.beginPath(); ctx.arc(-6,-6,4,0,Math.PI*2); ctx.arc(6,-6,4,0,Math.PI*2); ctx.fill();
+            } else if (this.type === 8) { // Thiết Vệ - Heavy armored guard
+                ctx.beginPath(); for(let i=0; i<8; i++){ let a = Math.PI*2/8*i; let r = this.radius * (i%2 ? 0.7 : 1); ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r); } ctx.closePath(); ctx.fill(); ctx.stroke();
+                ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(-10,-10,3,0,Math.PI*2); ctx.arc(10,-10,3,0,Math.PI*2); ctx.fill();
+            } else if (this.type === 9) { // Hộ Pháp - Elite guardian
+                ctx.beginPath(); ctx.arc(0,0,this.radius,0,Math.PI*2); ctx.fill(); ctx.stroke();
+                ctx.strokeStyle='#fff'; ctx.lineWidth=2; for(let i=0;i<6;i++){ let a=Math.PI*2/6*i; ctx.beginPath(); ctx.moveTo(Math.cos(a)*15,Math.sin(a)*15); ctx.lineTo(Math.cos(a)*25,Math.sin(a)*25); ctx.stroke(); }
+                ctx.fillStyle='#DAA520'; ctx.beginPath(); ctx.arc(-8,-8,4,0,Math.PI*2); ctx.arc(8,-8,4,0,Math.PI*2); ctx.fill();
+            } else if (this.isBoss) { // Huyết ma khổng lồ
+                ctx.beginPath(); ctx.moveTo(-40, 50); ctx.lineTo(0, -60); ctx.lineTo(40, 50); ctx.closePath(); ctx.fill(); ctx.stroke();
+                ctx.fillStyle='red'; ctx.beginPath(); ctx.arc(-20,-20,12,0,Math.PI*2); ctx.arc(20,-20,12,0,Math.PI*2); ctx.fill();
+            }
+            ctx.restore();
+            
+            // Draw elite and boss weapons
+            if((this.isBoss || this.isElite) && this.weapons) {
+                let style = SWORD_STYLES[Math.min(this.weapons.tier, SWORD_STYLES.length - 1)];
+                for(let i=0; i<this.weapons.count; i++) {
+                    let ang = this.weapons.angle + (Math.PI*2/this.weapons.count)*i;
+                    let wx = this.x + Math.cos(ang)*this.weapons.radius; 
+                    let wy = this.y + Math.sin(ang)*this.weapons.radius;
+                    drawCultivationSword(ctx, wx, wy, ang + Math.PI/2, style, this.weapons.tier);
+                }
+            }
+        }
+        takeHit(dmg, kx, ky, knock = 10) {
+            this.hp -= dmg; if (!this.isBoss) { let a = Math.atan2(this.y-ky, this.x-kx); this.pushX = Math.cos(a)*knock; this.pushY = Math.sin(a)*knock; }
+            let isCrit = Math.random() < (player ? player.weapons.critChance : 0.1);
+            spawnText(this.x, this.y, Math.floor(isCrit?dmg*2:dmg), isCrit?'#ff0':'#fff', isCrit);
+            return this.hp <= 0;
+        }
+    }
+
+    class Projectile {
+        constructor(x, y, angle, color, damage) { this.x = x; this.y = y; this.vx = Math.cos(angle)*10; this.vy = Math.sin(angle)*10; this.life = 80; this.color = color; this.damage = damage; }
+        update() { 
+            this.x += this.vx * state.gameSpeed; this.y += this.vy * state.gameSpeed; this.life -= state.gameSpeed; 
+            for(let i = state.enemies.length - 1; i >= 0; i--) { 
+                let e = state.enemies[i];
+                if(Math.hypot(e.x-this.x, e.y-this.y) < e.radius+15) { 
+                    if(e.takeHit(this.damage, this.x, this.y, 6)) handleEnemyKill(e, i);
+                    this.life = 0; break; 
+                } 
+                // Check collision with elite and boss swords
+                if((e.isBoss || e.isElite) && e.weapons) {
+                    for(let j=0; j<e.weapons.count; j++) {
+                        let ang = e.weapons.angle + (Math.PI*2/e.weapons.count)*j;
+                        let wx = e.x + Math.cos(ang)*e.weapons.radius; 
+                        let wy = e.y + Math.sin(ang)*e.weapons.radius;
+                        if(Math.hypot(wx-this.x, wy-this.y) < 20) {
+                            // Projectile hits enemy sword - destroy both
+                            this.life = 0;
+                            spawnParticles(wx, wy, 6, '#ff6600', 2);
+                            spawnText(wx, wy, 'CLASH!', '#ff6600');
+                            break;
+                        }
+                    }
+                }
+            } 
+        }
+        draw(ctx) { ctx.save(); ctx.translate(this.x, this.y); ctx.fillStyle = this.color; ctx.shadowBlur = 15; ctx.shadowColor = this.color; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill(); ctx.restore(); }
+    }
+    
+    class EnemyProjectile {
+        constructor(x, y, angle, color, damage, speed = 6) { 
+            this.x = x; this.y = y; 
+            this.vx = Math.cos(angle) * speed; 
+            this.vy = Math.sin(angle) * speed; 
+            this.life = 120; 
+            this.color = color; 
+            this.damage = damage;
+            this.radius = 8;
+        }
+        update() { 
+            this.x += this.vx * state.gameSpeed; 
+            this.y += this.vy * state.gameSpeed; 
+            this.life -= state.gameSpeed; 
+            
+            // Check collision with player
+            let playerDist = Math.hypot(player.x - this.x, player.y - this.y);
+            if(playerDist < player.radius + this.radius) {
+                player.takeDamage(this.damage);
+                this.life = 0;
+                spawnParticles(this.x, this.y, 8, this.color, 3);
+                return;
+            }
+            
+            // Check collision with player swords (sword blocking mechanic)
+            if(player && player.weapons) {
+                for(let i = 0; i < player.weapons.count; i++) {
+                    let ang = player.weapons.angle + (Math.PI * 2 / player.weapons.count) * i;
+                    let orbitRadius = player.weapons.radius + (player.weapons.tier * 20);
+                    let wx = player.x + Math.cos(ang) * orbitRadius;
+                    let wy = player.y + Math.sin(ang) * orbitRadius;
+                    
+                    if(Math.hypot(wx - this.x, wy - this.y) < 25) {
+                        // Player sword blocks enemy projectile
+                        this.life = 0;
+                        spawnParticles(wx, wy, 12, '#00ffff', 4);
+                        spawnText(wx, wy, 'BLOCKED!', '#00ffff');
+                        state.shake += 5; // Add screen shake for impact
+                        return;
+                    }
+                }
+            }
+        }
+        draw(ctx) { 
+            ctx.save(); 
+            ctx.translate(this.x, this.y); 
+            
+            // Draw projectile with trail effect
+            let gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius);
+            gradient.addColorStop(0, this.color);
+            gradient.addColorStop(0.7, adjustColor(this.color, -40));
+            gradient.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = gradient;
+            ctx.shadowBlur = 12; 
+            ctx.shadowColor = this.color; 
+            ctx.beginPath(); 
+            ctx.arc(0, 0, this.radius, 0, Math.PI * 2); 
+            ctx.fill(); 
+            
+            // Add rotating inner core
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore(); 
+        }
+    }
+
+    // --- CULTIVATION VISUALS ---
+    function drawSpectralLotus(ctx, x, y, size, color, frame) {
+        ctx.save(); ctx.translate(x, y); ctx.rotate(frame * 0.04);
+        ctx.shadowBlur = 25; ctx.shadowColor = color;
+        for(let i=0; i<8; i++) {
+            ctx.rotate(Math.PI/4); ctx.fillStyle = i%2===0 ? color : adjustColor(color, -60);
+            ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(size, -size, 0, -size*2); ctx.quadraticCurveTo(-size, -size, 0, 0); ctx.fill();
+        }
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0,0, size/2, 0, Math.PI*2); ctx.fill();
+        for(let j=0; j<3; j++) {
+            ctx.save(); ctx.rotate(frame * -0.12 + (j * Math.PI*2/3)); ctx.translate(size*2.2, 0);
+            ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(0, -size/3); ctx.lineTo(size/1.5, 0); ctx.lineTo(0, size/3); ctx.fill(); ctx.restore();
+        }
+        ctx.restore();
+    }
+
+    function drawCultivationSword(ctx, x, y, rotation, style, tier) {
+        ctx.save(); 
+        ctx.translate(x, y); 
+        ctx.rotate(rotation);
+        
+        let size = 50 + (tier * 6); // Lớn hơn
+        let width = 8 + (tier * 1); // Rộng hơn
+        
+        ctx.shadowBlur = 25; 
+        ctx.shadowColor = style.glow;
+        
+        // Tu Tiên curved blade design
+        ctx.beginPath();
+        
+        // Main curved blade (elegant Tu Tiên style)
+        ctx.moveTo(0, -size);
+        ctx.quadraticCurveTo(-width, -size * 0.7, -width * 0.7, -size * 0.3); // Left curve
+        ctx.quadraticCurveTo(-width * 0.5, 0, -width * 0.3, size * 0.3);
+        ctx.quadraticCurveTo(-3, size * 0.8, 0, size); // Tip
+        ctx.quadraticCurveTo(3, size * 0.8, width * 0.3, size * 0.3);
+        ctx.quadraticCurveTo(width * 0.5, 0, width * 0.7, -size * 0.3);
+        ctx.quadraticCurveTo(width, -size * 0.7, 0, -size); // Back to top
+        
+        // Blade gradient (Tu Tiên style)
+        let grad = ctx.createLinearGradient(0, -size, 0, size);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.3, style.colors[1]); 
+        grad.addColorStop(0.7, style.colors[0]);
+        grad.addColorStop(1, '#ffffff');
+        ctx.fillStyle = grad;
+        ctx.fill();
+        
+        // Inner blade highlight (gleaming effect)
+        ctx.beginPath();
+        ctx.moveTo(0, -size * 0.8);
+        ctx.quadraticCurveTo(-2, -size * 0.4, -1, 0);
+        ctx.quadraticCurveTo(0, size * 0.6, 0, size * 0.8);
+        ctx.quadraticCurveTo(0, size * 0.6, 1, 0);
+        ctx.quadraticCurveTo(2, -size * 0.4, 0, -size * 0.8);
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.8;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        
+        // Ornate Tu Tiên guard (Hộ kiếm)
+        ctx.fillStyle = style.colors[0];
+        ctx.shadowBlur = 15;
+        
+        // Main guard
+        ctx.beginPath();
+        ctx.ellipse(0, 0, width * 2.2, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Decorative guard ends
+        ctx.beginPath();
+        ctx.arc(-width * 2, 0, 5, 0, Math.PI * 2);
+        ctx.arc(width * 2, 0, 5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Tu Tiên hilt (Chuôi kiếm) with wrapping
+        ctx.fillStyle = adjustColor(style.colors[0], -30);
+        ctx.fillRect(-width * 0.6, 5, width * 1.2, 15);
+        
+        // Hilt wrapping pattern
+        for(let i = 0; i < 4; i++) {
+            ctx.beginPath();
+            ctx.arc(0, 8 + i * 3, width * 0.7, 0, Math.PI * 2);
+            ctx.strokeStyle = style.glow;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+        
+        // Pommel (Núm cuối)
+        ctx.beginPath();
+        ctx.arc(0, 22, 6, 0, Math.PI * 2);
+        ctx.fillStyle = style.glow;
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        
+        ctx.restore();
+    }
+
+    function drawLightningBolt(x1, y1, x2, y2, color) {
+        try {
+            ctx.save();
+            
+            // Lightning bolt mượt mà, không giật
+            ctx.beginPath(); 
+            ctx.moveTo(x1, y1);
+            
+            // Tạo lightning path với ít random hơn để không giật
+            let steps = 4; // Giảm xuống để mượt hơn
+            let dx = (x2-x1)/steps; 
+            let dy = (y2-y1)/steps;
+            
+            for(let i=1; i<steps; i++) {
+                // Giảm intensity để không giật mắt
+                let ox = (Math.random()-0.5) * 15; // Giảm từ 30 xuống 15
+                let oy = (Math.random()-0.5) * 15;
+                ctx.lineTo(x1 + dx*i + ox, y1 + dy*i + oy);
+            }
+            ctx.lineTo(x2, y2);
+            
+            // Outer glow nhẹ nhàng
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 5;
+            ctx.shadowBlur = 10; // Giảm blur để ít chói mắt
+            ctx.shadowColor = color;
+            ctx.globalAlpha = 0.6; // Làm mờ đi
+            ctx.stroke();
+            
+            // Inner core sáng
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 5;
+            ctx.globalAlpha = 0.9;
+            ctx.stroke();
+            
+            ctx.restore();
+        } catch(e) {
+            console.log('Lightning bolt error:', e);
+        }
+    }
+    
+    function drawLightningSeal(x, y, tier, scale = 1) {
+        try {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+            
+            const tierInfo = LIGHTNING_TIERS.find(t => t.lv <= tier) || LIGHTNING_TIERS[0];
+            const color = tierInfo.color;
+            
+            // Vẽ seal tròn với hình dạng rõ ràng (Tu Tiên style)
+            ctx.beginPath();
+            ctx.arc(0, 0, 35, 0, Math.PI * 2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 4;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = color;
+            ctx.stroke();
+            
+            // Vẽ vòng trong với pattern phức tạp
+            ctx.beginPath();
+            ctx.arc(0, 0, 25, 0, Math.PI * 2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // 8 tia lightning mạnh mẽ (Tu Tiên pattern)
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            for(let i = 0; i < 8; i++) {
+                let angle = (i / 8) * Math.PI * 2;
+                ctx.beginPath();
+                
+                // Main lightning ray
+                ctx.moveTo(Math.cos(angle) * 15, Math.sin(angle) * 15);
+                ctx.lineTo(Math.cos(angle) * 30, Math.sin(angle) * 30);
+                
+                // Lightning branches (Tu Tiên style)
+                let midX = Math.cos(angle) * 22;
+                let midY = Math.sin(angle) * 22;
+                ctx.moveTo(midX, midY);
+                ctx.lineTo(midX + Math.cos(angle + 0.5) * 8, midY + Math.sin(angle + 0.5) * 8);
+                ctx.moveTo(midX, midY);
+                ctx.lineTo(midX + Math.cos(angle - 0.5) * 8, midY + Math.sin(angle - 0.5) * 8);
+                
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = color;
+                ctx.stroke();
+            }
+            
+            // Center core với màu rực rỡ
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = color;
+            ctx.fill();
+            
+            // Chữ "雷" to và rõ ràng với màu tier
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 18px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = color;
+            ctx.fillText('雷', 0, 0);
+            
+            ctx.restore();
+        } catch(e) {
+            console.log('Lightning seal error:', e);
+        }
+    }
+
+    // --- GAME LOOP ---
+    // Mobile zoom factor - zoom out to see more map
+    const mobileZoom = 0.65; // 65% zoom = see more area
+    
+    function gameLoop() {
+        if(!player) return; gameLoopId = requestAnimationFrame(gameLoop); ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0,0,canvas.width, canvas.height);
+        let shakeX = (Math.random()-0.5)*state.shake; let shakeY = (Math.random()-0.5)*state.shake; state.shake *= 0.85;
+        
+        // Improved camera positioning for mobile with zoom out
+        if (window.innerWidth <= 768) {
+            // On mobile, zoom out to see more of the map
+            ctx.save();
+            ctx.scale(mobileZoom, mobileZoom);
+            state.cam.x = (canvas.width/mobileZoom)/2 - player.x + shakeX;
+            state.cam.y = (canvas.height/mobileZoom)/2 - player.y + shakeY;
+        } else {
+            // Desktop camera behavior
+            state.cam.x = canvas.width/2 - player.x + shakeX;
+            state.cam.y = canvas.height/2 - player.y + shakeY;
+        }
+        ctx.save(); ctx.translate(state.cam.x, state.cam.y);
+        
+        if(!state.isPaused && !state.isDead) {
+            state.frame += state.gameSpeed; player.update();
+            
+            // Progressive spawn system - more enemies over time
+            let baseSpawnInterval = 30;
+            let timeReduction = Math.min(20, Math.floor(state.frame / 600)); // Reduce interval every 10 seconds
+            let currentSpawnInterval = Math.max(8, baseSpawnInterval - timeReduction); // Min 8 frames interval
+            
+            if(state.frame % currentSpawnInterval < state.gameSpeed && !state.bossActive) { 
+                let a = Math.random()*Math.PI*2;
+                // Better difficulty progression based on player level and sword tier
+                let difficulty = Math.min(6, Math.floor((player.level + player.weapons.tier * 5) / 8));
+                let timeDifficulty = Math.min(4, Math.floor(state.frame / 1200)); // Every 20 seconds
+                let totalDifficulty = Math.max(difficulty, timeDifficulty);
+                
+                let type = 0; // Default enemy type
+                
+                // Elite enemy spawning (types 6-9) at higher difficulties
+                if(totalDifficulty >= 4 && Math.random() < 0.15) {
+                    type = 6 + Math.floor(Math.random() * 4); // Elite types 6-9
+                } else if(totalDifficulty >= 2 && Math.random() < 0.2) {
+                    // Ranged enemies (types 4-5) start appearing at difficulty 2
+                    type = 4 + Math.floor(Math.random() * 2); // Ranged types 4-5
+                } else {
+                    // Regular enemy spawning (types 0-3)
+                    if(Math.random() < 0.1 + totalDifficulty * 0.04) type = 3; // Vô Diện (fast)
+                    else if(Math.random() < 0.15 + totalDifficulty * 0.04) type = 2; // Hắc Quy (tanky)
+                    else if(Math.random() < 0.25 + totalDifficulty * 0.04) type = 1; // Độc Thủ (medium)
+                }
+                
+                // More enemies spawn as time progresses
+                let enemyCount = 1;
+                let spawnChance = Math.min(0.6, totalDifficulty * 0.1 + state.frame * 0.00005);
+                if(Math.random() < spawnChance) enemyCount = 2;
+                if(totalDifficulty >= 3 && Math.random() < spawnChance * 0.5) enemyCount = 3;
+                if(totalDifficulty >= 5 && Math.random() < spawnChance * 0.3) enemyCount = 4;
+                
+                for(let i = 0; i < enemyCount; i++) {
+                    let spawnAngle = a + (i * Math.PI * 2 / enemyCount);
+                    state.enemies.push(new Enemy(player.x+Math.cos(spawnAngle)*650, player.y+Math.sin(spawnAngle)*650, type)); 
+                }
+            }
+            // Fix boss spawning - spawn after ~30 seconds (1800 frames at 60fps) - Boss is now type 10
+            if(state.frame > 1800 && !state.bossActive && !state.bossSpawned) {
+                spawnBoss();
+                state.bossSpawned = true;
+            }
+            state.enemies.forEach(e => e.update());
+            state.projectiles.forEach(p => p.update()); state.projectiles = state.projectiles.filter(p => p.life > 0);
+            state.enemyProjectiles.forEach(p => p.update()); state.enemyProjectiles = state.enemyProjectiles.filter(p => p.life > 0);
+        }
+
+        let ents = [...state.enemies, player]; ents.sort((a,b)=>a.y-b.y); ents.forEach(e => e.draw(ctx));
+        state.projectiles.forEach(p => p.draw(ctx));
+        state.enemyProjectiles.forEach(p => p.draw(ctx)); // Draw enemy projectiles
+        
+        // Update Three.js 3D Model
+        updateThreeJS();
+        for(let l of state.lightnings) { 
+            drawLightningBolt(l.x1, l.y1, l.x2, l.y2, l.color); 
+            l.life--; 
+        }
+        state.lightnings = state.lightnings.filter(l => l.life > 0);
+        for(let p of state.particles) { 
+            try {
+                if(p.type === 'lightning-seal') {
+                    let alpha = Math.max(0, Math.min(1, p.life / 45)); // Cập nhật theo life mới
+                    let scale = 1.0; // Scale cố định không đổi để tránh giật
+                    ctx.globalAlpha = alpha;
+                    drawLightningSeal(p.x, p.y, p.tier || 0, scale);
+                    ctx.globalAlpha = 1;
+                    p.life--;
+                } else {
+                    p.x+=p.vx; p.y+=p.vy; p.life--; 
+                    ctx.globalAlpha = Math.max(0, p.life/35); 
+                    ctx.fillStyle = p.c; 
+                    ctx.beginPath(); 
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); 
+                    ctx.fill(); 
+                }
+            } catch(e) {
+                console.log('Particle error:', e);
+                p.life = 0; // Remove bad particle
+            }
+        }
+        state.particles = state.particles.filter(p => p.life > 0);
+        ctx.restore();
+        // Restore mobile zoom
+        if (window.innerWidth <= 768) {
+            ctx.restore();
+        }
+    }
+
+    // --- HELPERS ---
+    function spawnParticles(x, y, n, c, s=2) { for(let i=0; i<n; i++) state.particles.push({x, y, vx:(Math.random()-.5)*s*2, vy:(Math.random()-.5)*s*2, life:35, maxLife:35, size:2+Math.random()*3, c}); }
+    function spawnText(x, y, txt, c, isCrit=false) { let d = document.createElement('div'); d.className='dmg-text'+(isCrit?' crit-text':''); d.style.color=c; d.innerText=txt; d.style.left = (x+state.cam.x)+'px'; d.style.top = (y+state.cam.y)+'px'; damageContainer.appendChild(d); setTimeout(()=>d.remove(), 800); }
+    function getNearestEnemy(x, y, range) { let nearest = null; let minDst = range; for(let e of state.enemies) { let d = Math.hypot(e.x - x, e.y - y); if(d < minDst) { minDst = d; nearest = e; } } return nearest; }
+    function notify(txt) { let p = document.getElementById('notify-popup'); p.innerText = txt; p.classList.remove('pop-anim'); void p.offsetWidth; p.classList.add('pop-anim'); }
+    // Enhanced GM system functions
+    function showGMLogin() {
+        document.getElementById('gm-password-modal').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('gm-password-input').focus();
+        }, 100);
+    }
+    
+    function hideGMLogin() {
+        document.getElementById('gm-password-modal').style.display = 'none';
+        document.getElementById('gm-password-input').value = '';
+    }
+    
+    function validateGMPassword() {
+        const password = document.getElementById('gm-password-input').value;
+        if (password === '0412') {
+            hideGMLogin();
+            activateGMMode();
+        } else {
+            // Wrong password effect
+            const input = document.getElementById('gm-password-input');
+            input.style.borderColor = '#ff3333';
+            input.style.animation = 'shake 0.5s ease-in-out';
+            setTimeout(() => {
+                input.style.borderColor = 'var(--primary-gold)';
+                input.style.animation = '';
+            }, 500);
+            showGMNotification('❌ Mật khẩu GM sai!', '🔒');
+        }
+    }
+    
+    // Allow Enter key in password input
+    document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && document.getElementById('gm-password-modal').style.display === 'block') {
+                validateGMPassword();
+            }
+        });
+    });
+    
+    function activateGMMode() {
+        let m = document.getElementById('gm-menu');
+        m.style.display = m.style.display === 'block' ? 'none' : 'block';
+        
+        if (m.style.display === 'block') {
+            playSound('levelup');
+            // GM Mode activated - give bonuses
+            player.hp = player.maxHp;
+            player.xp += 5000;
+            player.weapons.count = Math.min(player.weapons.count + 2, 12);
+            player.skills.lightning = Math.min(player.skills.lightning + 2, 10);
+            updateHud();
+            showGMNotification('⚡ THIÊN ĐẠO QUYỀN NĂNG KÍCH HOẠT! ⚡', '🌟');
+        }
+    }
+    
+    function closeGMMenu() {
+        let m = document.getElementById('gm-menu');
+        m.style.display = 'none';
+    }
+    
+    function adjustColor(hex, amt) { let num = parseInt(hex.slice(1),16); let r = Math.max(0,Math.min(255,(num>>16)+amt)), g = Math.max(0,Math.min(255,((num>>8)&0x00FF)+amt)), b = Math.max(0,Math.min(255,(num&0x0000FF)+amt)); return "#"+(g|(b<<8)|(r<<16)).toString(16).padStart(6,'0'); }
+
+    function spawnBoss() { state.bossActive = true; notify("HUYẾT MA LÃO TỔ GIÁNG THẾ!"); let boss = new Enemy(player.x+500, player.y, 10); state.enemies.push(boss); document.getElementById('boss-hud').style.display = 'block'; function up(){ if(!boss||boss.hp<=0){document.getElementById('boss-hud').style.display='none';return;} document.getElementById('boss-hp-fill').style.width=(boss.hp/boss.maxHp*100)+'%'; requestAnimationFrame(up); } up(); }
+    function gameOver() { state.isDead=true; document.getElementById('gameover-screen').classList.remove('hidden'); }
+
+    const UPGRADES = [
+        { name: "Vạn Kiếm Quy Tông", desc: "Thêm một phi kiếm hộ thân quanh mình.", rarity: "Thần Thoại", fn: p => p.addSword() },
+        { name: "Cửu Thiên Lôi Ấn", desc: "Triệu hồi sấm sét thiên phạt giáng xuống yêu ma.", rarity: "Hiếm", fn: p => { p.skills.lightning++; updateHud(); } },
+        { name: "Thanh Liên Võ Hồn", desc: "U Minh Thanh Liên hộ pháp, tự động trảm sát kẻ địch.", rarity: "Thần Thoại", fn: p => { p.skills.voHon++; updateHud(); } },
+        { name: "Thần Hành Thuật", desc: "Tăng vĩnh viễn tốc độ di chuyển.", rarity: "Hiếm", fn: p => { p.speed += 0.6; } },
+        { name: "Nhất Kiếm Trảm Thiên", desc: "+35% Sát thương toàn bộ thần thông.", rarity: "Hiếm", fn: p => p.weapons.dmg*=1.35 },
+        { name: "Bất Diệt Thần Thể", desc: "+80 Máu tối đa và hồi đầy sinh cơ.", rarity: "Phổ Thông", fn: p => { p.maxHp+=80; p.hp=p.maxHp; } }
+    ];
+
+    function showUpgrade() {
+        let box = document.getElementById('upgrade-grid'); box.innerHTML=''; document.getElementById('levelup-screen').classList.remove('hidden');
+        state.screen = 'choice'; // Set screen state để phím tắt hoạt động
+        state.currentOptions = []; let pool = [...UPGRADES];
+        for(let i=0; i<3; i++) {
+            let u = pool.splice(Math.floor(Math.random()*pool.length),1)[0]; state.currentOptions.push(u);
+            let div = document.createElement('div'); div.className = `choice-card ${u.rarity==='Thần Thoại'?'glow-mythic':''}`;
+            div.innerHTML = `<div class="rarity-tag ${u.rarity==='Thần Thoại'?'rarity-mythic':(u.rarity==='Hiếm'?'rarity-rare':'rarity-common')}">${u.rarity}</div><h3 class="card-title">${u.name}</h3><p class="card-desc">${u.desc}</p>`;
+            div.onclick = () => { 
+                u.fn(player); 
+                document.getElementById('levelup-screen').classList.add('hidden'); 
+                state.screen = 'game'; // Trả về game state
+                state.isPaused = false; 
+                playSound('levelup');
+                if(player.xp>=player.maxXp) player.gainXp(0); 
+                updateHud(); 
+            }; 
+            box.appendChild(div);
+        }
+    }
+
+    function updateHud() {
+        if(!player) return;
+        document.getElementById('hp-bar').style.width = (player.hp/player.maxHp*100)+'%';
+        document.getElementById('hp-text').innerText = `${Math.ceil(player.hp)}/${player.maxHp}`;
+        document.getElementById('xp-bar').style.width = (player.xp/player.maxXp*100)+'%';
+        document.getElementById('xp-text').innerText = Math.floor(player.xp/player.maxXp*100)+'%';
+        document.getElementById('rank-title').innerText = RANKS[player.rankIdx];
+        if(player.skills.voHon > 0) {
+            document.getElementById('soul-stat-row').style.display = 'flex';
+            document.getElementById('soul-bar-bg').style.display = 'block';
+            document.getElementById('soul-xp-bar').style.width = (player.soul.xp/player.soul.maxXp*100)+'%';
+            
+            // Update soul rank display with enhanced info
+            let soulInfo = SOUL_COLORS[Math.min(player.soul.tierIdx, SOUL_COLORS.length - 1)];
+            document.getElementById('soul-rank').innerText = `${soulInfo.name} (Lv.${player.soul.level})`;
+            document.getElementById('soul-rank').style.color = soulInfo.c;
+            document.getElementById('soul-xp-text').innerText = `${Math.floor(player.soul.xp)}/${player.soul.maxXp}`;
+            
+            // Enhanced soul bar color
+            let soulBar = document.getElementById('soul-xp-bar');
+            soulBar.style.background = `linear-gradient(90deg, ${soulInfo.c}88, ${soulInfo.c})`;
+            soulBar.style.boxShadow = `0 0 10px ${soulInfo.c}`;
+        }
+        if(player.skills.lightning > 0) {
+            document.getElementById('lightning-stat-row').style.display = 'flex';
+            let visual = LIGHTNING_TIERS[0];
+            for (let t of LIGHTNING_TIERS) { if (player.skills.lightning >= t.lv) visual = t; }
+            document.getElementById('lightning-rank').innerText = `Cấp ${player.skills.lightning}`;
+            document.getElementById('lightning-label').style.color = visual.color;
+        }
+        let tierIdx = Math.min(player.weapons.tier, SWORD_STYLES.length-1);
+        document.getElementById('weapon-info').innerText = `${SWORD_STYLES[tierIdx].name} | ${player.weapons.count}/15`;
+    }
+
+    // Enhanced GM system functions
+    function showGMLogin() {
+        document.getElementById('gm-password-modal').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('gm-password-input').focus();
+        }, 100);
+    }
+    
+    function hideGMLogin() {
+        document.getElementById('gm-password-modal').style.display = 'none';
+        document.getElementById('gm-password-input').value = '';
+    }
+    
+    function validateGMPassword() {
+        const password = document.getElementById('gm-password-input').value;
+        if (password === '0412') {
+            hideGMLogin();
+            activateGMMode();
+        } else {
+            // Wrong password effect
+            const input = document.getElementById('gm-password-input');
+            input.style.borderColor = '#ff3333';
+            input.style.animation = 'shake 0.5s ease-in-out';
+            setTimeout(() => {
+                input.style.borderColor = 'var(--primary-gold)';
+                input.style.animation = '';
+            }, 500);
+            showGMNotification('❌ Mật khẩu GM sai!', '🔒');
+        }
+    }
+    
+    // Allow Enter key in password input
+    document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && document.getElementById('gm-password-modal').style.display === 'block') {
+                validateGMPassword();
+            }
+        });
+    });
+
+    function gmPlayerLevelUp() { 
+        if(player) {
+            player.gainXp(player.maxXp);
+            showGMNotification('🆙 Player đã thăng cấp!', '⚡');
+        }
+    }
+    
+    function gmSoulLevelUp() { 
+        if(player && player.skills.voHon >= 0) { 
+            if(player.skills.voHon === 0) {
+                player.skills.voHon = 1; // Unlock weapon soul if not unlocked
+            }
+            
+            // Increase soul tier and reset XP for next level
+            player.soul.tierIdx = Math.min(player.soul.tierIdx + 1, SOUL_COLORS.length - 1);
+            player.soul.level++;
+            player.soul.xp = 0;
+            player.soul.maxXp = Math.floor(player.soul.maxXp * 1.5);
+            
+            updateHud();
+            let soulName = SOUL_COLORS[player.soul.tierIdx].name;
+            showGMNotification(`🔮 Võ Hồn tiến hóa: ${soulName}!`, '✨');
+        }
+    }
+    
+    function gmLightningLevelUp() { 
+        if(player) { 
+            player.skills.lightning = Math.min(player.skills.lightning + 1, 15);
+            updateHud(); 
+            showGMNotification('⚡ Lôi Ấn đã thăng cấp!', '⚡');
+        } 
+    }
+    
+    function gmAddSword() { 
+        if(player) {
+            player.addSword();
+            showGMNotification('⚔️ Đã thêm 1 phi kiếm!', '🗡️');
+        }
+    }
+    
+    function gmAdd15Swords() {
+        if(player) {
+            // Set maximum swords directly
+            player.weapons.count = 15;
+            updateHud();
+            showGMNotification('⚔️⚔️ Đã thêm 15 phi kiếm - Vạn Kiếm Quy Tông!', '🌟');
+        }
+    }
+    
+    function gmKillAll() { 
+        const count = state.enemies.length;
+        for(let i = state.enemies.length - 1; i >= 0; i--) {
+            handleEnemyKill(state.enemies[i], i);
+        }
+        showGMNotification(`💀 Đã tiêu diệt ${count} yêu ma!`, '💀');
+    }
+    
+    function gmMaxPower() {
+        if(player) {
+            // Max everything
+            player.rankIdx = RANKS.length - 1;
+            player.maxHp = 1000;
+            player.hp = player.maxHp;
+            player.weapons.count = 15;
+            player.weapons.tier = SWORD_STYLES.length - 1;
+            player.weapons.dmg = 500;
+            player.skills.lightning = 15;
+            player.skills.voHon = 10;
+            player.soul.tierIdx = SOUL_COLORS.length - 1;
+            player.soul.level = 50;
+            player.speed = 8;
+            
+            updateHud();
+            showGMNotification('🌟 THẦN THÁNH CẢNH GIỚI ĐẠT TO! 🌟', '👑');
+        }
+    }
+    
+    // GM Tools mới
+    function showGMNotification(message, icon = '') {
+        const notification = document.getElementById('gm-notification');
+        notification.innerHTML = `${icon} ${message}`;
+        notification.classList.remove('gm-show');
+        void notification.offsetWidth; // Force reflow
+        notification.classList.add('gm-show');
+    }
+
+    function gmMaxSpeed() { 
+        if(player) { 
+            player.speed = 8; // Tăng tốc độ di chuyển trực tiếp
+            updateHud(); 
+            showGMNotification('Thần hành thuật đã đạt cấp tối đa!', '🏃‍♂️');
+        } 
+    }
+    
+    function gmMax15Swords() {
+        if(player) {
+            for(let i = 0; i < 15; i++) {
+                player.addSword();
+            }
+            showGMNotification('Đã thêm 15 kiếm!', '⚔️');
+        }
+    }
+    
+    function gmCallBoss() {
+        if(player && !state.bossActive) {
+            spawnBoss();
+            state.bossSpawned = true;
+            showGMNotification('Huyết Ma Boss đã được triệu hồi!', '👹');
+        } else if(state.bossActive) {
+            showGMNotification('Boss đã có mặt rồi!', '⚠️');
+        }
+    }
+    
+    // Background Music System
+    let musicStarted = false;
+    function startBackgroundMusic() {
+        if (!musicStarted) {
+            const music = document.getElementById('bg-music');
+            if (music) {
+                music.volume = 0.3;
+                music.play().then(() => {
+                    musicStarted = true;
+                    console.log('Background music started');
+                }).catch(e => {
+                    console.log('Music play failed:', e);
+                });
+            }
+        }
+    }
+    
+    // Start music on first user interaction
+    document.addEventListener('touchstart', startBackgroundMusic, { once: true });
+    document.addEventListener('click', startBackgroundMusic, { once: true });
+    
+    // Fix hamburger menu for mobile
+    document.addEventListener('DOMContentLoaded', function() {
+        const gameMenu = document.getElementById('game-menu');
+        const gameMenuBtn = document.getElementById('game-menu-btn');
+        const startBtn = document.getElementById('start-game-btn');
+        
+        // Hamburger menu handlers
+        if (gameMenu || gameMenuBtn) {
+            const menuElement = gameMenu || gameMenuBtn;
+            // Ensure touch events work on mobile
+            menuElement.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showGameSelector();
+            }, { passive: false });
+            
+            // Backup click handler
+            menuElement.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showGameSelector();
+            });
+        }
+        
+        // Start game button handler
+        if (startBtn) {
+            startBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                startGame();
+            });
+        }
+    });
+    
+    // Close menu with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            hideGameSelector();
+        }
+    });
+</script>
+</body>
+</html>

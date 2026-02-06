@@ -1,0 +1,3164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asteroid Miner V15 - The Architect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;800&family=Orbitron:wght@400;700;900&family=VT323&display=swap" rel="stylesheet">
+    
+    <!-- TLBB COMPLETE AUDIO SYSTEM -->
+    <!-- Background Music -->
+    <audio id="bg-music" preload="auto" loop>
+        <source src="music/Sound_TLBB/music/yinsen1.mp3" type="audio/mpeg">
+    </audio>
+    
+    <!-- Game Sounds -->
+    <audio id="correct-sound" preload="auto">
+        <source src="music/Sound_TLBB/SuccessMRZ.wav" type="audio/wav">
+    </audio>
+    <audio id="wrong-sound" preload="auto">
+        <source src="music/Sound_TLBB/FailMRZ.wav" type="audio/wav">
+    </audio>
+    <audio id="skill-sound" preload="auto">
+        <source src="music/Sound_TLBB/skill_leitingzhinu.wav" type="audio/wav">
+    </audio>
+    
+    <!-- Interface Sounds -->
+    <audio id="button-click" preload="auto">
+        <source src="music/Sound_TLBB/interface/click_common_1.wav" type="audio/wav">
+    </audio>
+    <audio id="window-open" preload="auto">
+        <source src="music/Sound_TLBB/interface/common_window_open.wav" type="audio/wav">
+    </audio>
+    <audio id="window-close" preload="auto">
+        <source src="music/Sound_TLBB/interface/common_window_close.wav" type="audio/wav">
+    </audio>
+    <audio id="level-complete" preload="auto">
+        <source src="music/Sound_TLBB/interface/quest_complete.wav" type="audio/wav">
+    </audio>
+    <audio id="money-sound" preload="auto">
+        <source src="music/Sound_TLBB/interface/sound_money.wav" type="audio/wav">
+    </audio>
+    
+    <style>
+        /* ===== 1. CORE VARIABLES ===== */
+        :root {
+            --primary: #00f2ff;       /* Cyan Main */
+            --secondary: #ffd700;     /* Gold */
+            --success: #00ff9d;       /* Green */
+            --danger: #ff0055;        /* Red */
+            --bg-deep: #020408;
+            --bg-panel: rgba(10, 15, 25, 0.96);
+            --border: 1px solid rgba(0, 242, 255, 0.2);
+            --font-hud: 'Orbitron', monospace;
+            --font-ui: 'Exo 2', sans-serif;
+            --font-code: 'VT323', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: var(--font-ui); background-color: var(--bg-deep); color: #fff;
+            height: 100vh; overflow: hidden; display: flex; justify-content: center; align-items: center;
+            background-image: radial-gradient(circle at 50% 50%, #111827, #000);
+        }
+
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; }
+
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; }
+        .crt-scanline {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.1) 50%); background-size: 100% 4px; pointer-events: none;
+        }
+
+        /* ===== 2. MAIN CONTAINER ===== */
+        .game-container {
+            width: 100%; max-width: 600px; height: 100vh; max-height: 950px;
+            background: var(--bg-panel); position: relative; display: flex; flex-direction: column;
+            backdrop-filter: blur(20px); box-shadow: 0 0 60px rgba(0, 242, 255, 0.1); border: var(--border);
+        }
+        
+        /* Desktop */
+        @media (min-width: 1024px) { 
+            .game-container { 
+                height: 95vh; 
+                border-radius: 20px; 
+                border: 1px solid rgba(0,242,255,0.3);
+                max-width: 700px;
+            } 
+        }
+        
+        /* Tablet */
+        @media (min-width: 600px) and (max-width: 1023px) { 
+            .game-container { 
+                height: 95vh; 
+                border-radius: 15px; 
+                border: 1px solid rgba(0,242,255,0.3);
+                max-width: 90vw;
+            }
+            h1.title {
+                font-size: 1.8rem !important;
+            }
+            .btn-main {
+                padding: 10px !important;
+                font-size: 0.9rem !important;
+            }
+        }
+        
+        /* Mobile */
+        @media (max-width: 599px) {
+            body {
+                padding: 0;
+                align-items: stretch;
+            }
+            .game-container {
+                height: 100vh;
+                max-height: none;
+                border-radius: 0;
+                border: none;
+                max-width: none;
+            }
+            h1.title {
+                font-size: 1.5rem !important;
+                margin-top: 5px !important;
+            }
+            .subtitle {
+                font-size: 0.7rem !important;
+                margin-bottom: 15px !important;
+            }
+            .screen {
+                padding: 15px !important;
+            }
+            .btn-main {
+                padding: 14px !important;
+                font-size: 1rem !important;
+                margin-bottom: 12px !important;
+            }
+            .btn-fire {
+                padding: 16px !important;
+                font-size: 1.3rem !important;
+            }
+            .settings-btn {
+                width: 40px !important;
+                height: 40px !important;
+                top: 10px !important;
+                left: 10px !important;
+                font-size: 1.3rem !important;
+            }
+        }
+
+        .screen { flex: 1; display: none; flex-direction: column; padding: 20px; overflow-y: auto; animation: fadeIn 0.3s; }
+        .screen.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .hidden { display: none !important; }
+
+        /* ===== 3. UI ELEMENTS ===== */
+        h1.title { font-family: var(--font-hud); font-size: 2.2rem; text-align: center; color: #fff; text-shadow: 0 0 15px var(--primary); margin-top: 10px; }
+        .subtitle { text-align: center; color: var(--primary); font-size: 0.8rem; letter-spacing: 4px; margin-bottom: 20px; opacity: 0.8; }
+
+        button { cursor: pointer; border: none; outline: none; font-family: var(--font-ui); font-weight: 700; transition: 0.2s; position: relative; overflow: hidden; }
+        button:active { transform: scale(0.96); }
+
+        .btn-main { background: rgba(0,242,255,0.1); border: 1px solid var(--primary); color: var(--primary); padding: 12px; border-radius: 8px; width: 100%; margin-bottom: 10px; font-size: 1rem; }
+        .btn-main:hover { background: var(--primary); color: #000; box-shadow: 0 0 20px var(--primary); }
+
+        .btn-fire {
+            background: linear-gradient(135deg, #ffd700, #ff8800); color: #000;
+            font-family: var(--font-hud); font-size: 1.5rem; padding: 18px; border-radius: 50px; width: 100%;
+            box-shadow: 0 0 15px rgba(255,170,0,0.5); border: 2px solid #fff;
+            animation: pulse 2s infinite;
+        }
+        .btn-fire.jammed { background: #555; color: #888; border-color: #555; animation: none; cursor: not-allowed; }
+        @keyframes pulse { 0% {box-shadow: 0 0 15px rgba(255,170,0,0.5);} 50% {box-shadow: 0 0 30px rgba(255,170,0,0.8);} }
+
+        /* Settings Button */
+        .settings-btn {
+            position: absolute; top: 15px; left: 15px; z-index: 50;
+            background: rgba(0,0,0,0.6); border: 1px solid var(--primary); color: var(--primary);
+            width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; transition: 0.3s;
+        }
+        .settings-btn:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px var(--primary); transform: rotate(90deg); }
+
+        /* ===== 4. SETTINGS MODAL (REMASTERED) ===== */
+        .settings-modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #05080c; z-index: 200;
+            display: none; flex-direction: column; padding: 20px; overflow-y: auto;
+        }
+        .settings-modal.active { display: flex; animation: slideUp 0.3s; }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        /* Mobile settings adjustments */
+        @media (max-width: 599px) {
+            .settings-modal {
+                padding: 15px !important;
+            }
+            .settings-modal h2 {
+                font-size: 1.3rem !important;
+                margin-bottom: 15px !important;
+            }
+            .settings-modal .btn-main {
+                margin-bottom: 8px !important;
+                padding: 12px !important;
+            }
+            .game-nav-btn {
+                padding: 12px !important;
+                margin-bottom: 8px !important;
+                font-size: 0.9rem !important;
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.5; }
+            50% { transform: translateY(-10px) rotate(180deg); opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        /* Enhanced Game Navigation Buttons */
+        .game-nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: all 0.6s;
+        }
+        
+        .game-nav-btn:hover::before {
+            left: 100%;
+        }
+        
+        .game-nav-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.4),
+                0 0 30px currentColor;
+        }
+        
+        .game-nav-btn:active {
+            transform: translateY(-1px) scale(0.98);
+            transition: all 0.1s;
+        }
+
+        /* Custom TLBB Style Scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+        
+        /* Mobile scrollbar adjustments */
+        @media (max-width: 599px) {
+            ::-webkit-scrollbar {
+                width: 8px;
+            }
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: linear-gradient(180deg, #0a1a2a, #1a2a3a);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 242, 255, 0.2);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            border: 2px solid #0a1a2a;
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #00ffff, #0099ff);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
+        }
+        
+        /* Touch optimization for mobile */
+        @media (max-width: 599px) {
+            button {
+                min-height: 44px; /* iOS minimum touch target */
+                touch-action: manipulation;
+            }
+            
+            .btn-main:active,
+            .btn-fire:active,
+            .game-nav-btn:active {
+                transform: scale(0.95);
+                transition: transform 0.1s;
+            }
+            
+            /* Larger touch targets for small elements */
+            .settings-btn {
+                min-width: 44px;
+                min-height: 44px;
+            }
+        }
+        
+        /* Prevent zoom on input focus for iOS */
+        @media screen and (-webkit-min-device-pixel-ratio: 0) {
+            select, textarea, input[type="text"], input[type="password"],
+            input[type="datetime"], input[type="datetime-local"],
+            input[type="date"], input[type="month"], input[type="time"],
+            input[type="week"], input[type="number"], input[type="email"], 
+            input[type="url"], input[type="search"], input[type="tel"], 
+            input[type="color"] {
+                font-size: 16px !important;
+            }
+        }
+            button {
+                min-height: 44px; /* iOS minimum touch target */
+                touch-action: manipulation;
+            }
+            
+            .btn-main:active,
+            .btn-fire:active,
+            .game-nav-btn:active {
+                transform: scale(0.95);
+                transition: transform 0.1s;
+            }
+            
+            /* Larger touch targets for small elements */
+            .settings-btn {
+                min-width: 44px;
+                min-height: 44px;
+            }
+        }
+        
+        /* Prevent zoom on input focus for iOS (excluding game-input) */
+        @media screen and (-webkit-min-device-pixel-ratio: 0) {
+            select:not(.game-input), textarea:not(.game-input), input[type="text"]:not(.game-input), input[type="password"]:not(.game-input),
+            input[type="datetime"]:not(.game-input), input[type="datetime-local"]:not(.game-input),
+            input[type="date"]:not(.game-input), input[type="month"]:not(.game-input), input[type="time"]:not(.game-input),
+            input[type="week"]:not(.game-input), input[type="number"]:not(.game-input), input[type="email"]:not(.game-input), 
+            input[type="url"]:not(.game-input), input[type="search"]:not(.game-input), input[type="tel"]:not(.game-input), 
+            input[type="color"]:not(.game-input) {
+                font-size: 16px !important;
+            }
+        }
+        
+        /* Prevent scroll when focusing on game input */
+        .game-input:focus {
+            scroll-behavior: auto;
+        }
+        
+        body.no-scroll {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+        }
+
+        /* TLBB Style Range Sliders */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+            border: 2px solid #fff;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.8);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+        }
+
+        /* Math Config Buttons */
+        .math-toggle:hover {
+            background: rgba(0, 242, 255, 0.1) !important;
+            border-color: var(--primary) !important;
+            transform: scale(1.02);
+        }
+        
+        .math-toggle.active {
+            background: linear-gradient(135deg, rgba(0, 242, 255, 0.3), rgba(0, 150, 255, 0.2)) !important;
+            border-color: var(--primary) !important;
+            color: var(--primary) !important;
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.3) !important;
+            font-weight: bold;
+        }
+
+        .config-section { margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+        .config-header { color: var(--secondary); font-family: var(--font-hud); font-size: 0.85rem; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+        .config-hint { font-size: 0.65rem; color: #666; font-family: var(--font-ui); text-transform: none; }
+
+        /* Grid System */
+        .config-grid { display: grid; gap: 8px; }
+        .col-2 { grid-template-columns: 1fr 1fr; }
+        .col-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .col-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+        .toggle-btn {
+            padding: 10px 5px; background: #1a1f2e; border: 1px solid #334; color: #889; border-radius: 8px; font-size: 0.8rem;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; transition: 0.1s;
+        }
+        .toggle-btn:hover { background: #252b3d; }
+        .toggle-btn.active { background: rgba(0, 242, 255, 0.15); border-color: var(--primary); color: var(--primary); font-weight: 700; box-shadow: inset 0 0 10px rgba(0, 242, 255, 0.1); }
+        .toggle-icon { font-size: 1.2rem; }
+
+        /* Developer Toggle */
+        .dev-toggle { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #001100; border: 1px dashed #0f0; border-radius: 8px; color: #0f0; font-family: var(--font-code); margin-top: 10px; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #0f0; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .settings-footer { margin-top: auto; padding-top: 20px; }
+
+        /* ===== 5. GM PANEL (Enhanced) ===== */
+        .gm-panel {
+            position: fixed; top: 10px; right: -320px; width: 300px; height: auto; max-height: 90vh;
+            background: linear-gradient(135deg, #0a0a0a, #1a1a2e, #16213e); 
+            border: 2px solid #00ff00; border-radius: 15px; padding: 15px; 
+            font-family: 'Courier New', monospace; font-size: 0.8rem; z-index: 1000;
+            box-shadow: 0 0 30px rgba(0,255,0,0.3), inset 0 0 20px rgba(0,255,0,0.1);
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .gm-panel.active { right: 10px; animation: gmPanelGlow 2s ease-in-out infinite; }
+        
+        @keyframes gmPanelGlow {
+            0%, 100% { box-shadow: 0 0 30px rgba(0,255,0,0.3), inset 0 0 20px rgba(0,255,0,0.1); }
+            50% { box-shadow: 0 0 40px rgba(0,255,0,0.5), inset 0 0 30px rgba(0,255,0,0.2); }
+        }
+        
+        .gm-header { 
+            color: #00ff00; text-align: center; 
+            border-bottom: 2px dashed #00ff00; 
+            margin-bottom: 12px; font-size: 1.1rem; 
+            text-shadow: 0 0 10px #00ff00;
+            padding-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        .gm-section {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0,255,0,0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(0,255,0,0.2);
+        }
+        
+        .gm-section-title {
+            color: #00dd00;
+            font-size: 0.7rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-weight: bold;
+            border-bottom: 1px solid #00dd00;
+            padding-bottom: 3px;
+        }
+        
+        .gm-btn { 
+            background: linear-gradient(135deg, #003300, #004400); 
+            border: 1px solid #00ff00; 
+            color: #00ff00; 
+            width: 100%; 
+            margin-bottom: 6px; 
+            padding: 8px; 
+            cursor: pointer; 
+            font-family: 'Courier New', monospace; 
+            text-transform: uppercase;
+            border-radius: 5px;
+            transition: all 0.3s;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-shadow: 0 0 5px #00ff00;
+        }
+        .gm-btn:hover { 
+            background: linear-gradient(135deg, #00ff00, #00dd00); 
+            color: #000; 
+            box-shadow: 0 0 15px rgba(0,255,0,0.5);
+            text-shadow: none;
+        }
+        .gm-btn.danger {
+            background: linear-gradient(135deg, #330000, #440000);
+            border-color: #ff3333;
+            color: #ff3333;
+            text-shadow: 0 0 5px #ff3333;
+        }
+        .gm-btn.danger:hover {
+            background: linear-gradient(135deg, #ff3333, #dd0000);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(255,51,51,0.5);
+            text-shadow: none;
+        }
+        .gm-btn.special {
+            background: linear-gradient(135deg, #000033, #000044);
+            border-color: #3333ff;
+            color: #3333ff;
+            text-shadow: 0 0 5px #3333ff;
+        }
+        .gm-btn.special:hover {
+            background: linear-gradient(135deg, #3333ff, #0000dd);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(51,51,255,0.5);
+            text-shadow: none;
+        }
+        
+        .gm-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 4px;
+        }
+        
+        .gm-status {
+            text-align: center;
+            color: #00aa00;
+            font-size: 0.6rem;
+            margin-top: 10px;
+            padding: 5px;
+            background: rgba(0,255,0,0.1);
+            border-radius: 5px;
+            animation: statusBlink 3s ease-in-out infinite;
+        }
+        
+        @keyframes statusBlink {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        /* ===== 6. GAMEPLAY ELEMENTS ===== */
+        .viewport {
+            flex: 1; min-height: 280px; position: relative; margin-bottom: 20px;
+            background: radial-gradient(circle at center, #1a2a3a 0%, #000 100%);
+            border: 1px solid rgba(0,242,255,0.3); border-radius: 20px;
+            box-shadow: inset 0 0 50px #000; overflow: hidden;
+            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+        }
+        .grid-lines {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background-image: linear-gradient(rgba(0,242,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,242,255,0.1) 1px, transparent 1px);
+            background-size: 40px 40px; opacity: 0.3; pointer-events: none;
+        }
+
+        .threat-strip { position: absolute; top: 0; left: 0; width: 100%; height: 5px; background: #300; z-index: 10; }
+        .threat-fill { height: 100%; background: var(--danger); width: 0%; box-shadow: 0 0 10px var(--danger); }
+        
+        .monster-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; padding-bottom: 60px; pointer-events: none; }
+        .monster-svg { width: 160px; height: 160px; filter: drop-shadow(0 0 20px rgba(255,255,255,0.1)); animation: float 3s ease-in-out infinite; transition: transform 0.1s; }
+        .monster-svg.hit { transform: scale(0.9); filter: brightness(2) sepia(1) hue-rotate(-50deg) saturate(5); }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-15px)} }
+
+        /* Beams */
+        .laser { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 5; opacity: 0; pointer-events: none; }
+        .laser.beam-blaster { width: 4px; height: 100%; background: #00f2ff; box-shadow: 0 0 15px #00f2ff; transform-origin: bottom; }
+        .laser.beam-blaster.shoot { animation: blasterShot 0.15s ease-out; }
+        .laser.beam-cannon { width: 30px; height: 30px; border-radius: 50%; background: #ff5500; box-shadow: 0 0 20px #ff5500; bottom: 20px; }
+        .laser.beam-cannon.shoot { animation: cannonShot 0.3s ease-out forwards; }
+        .laser.beam-vampire { width: 10px; height: 100%; background: #a0f; box-shadow: 0 0 15px #a0f; transform-origin: bottom; }
+        .laser.beam-vampire.shoot { animation: vampireShot 0.4s ease-out; }
+        .laser.beam-plasma { width: 8px; height: 100%; background: #ffff00; box-shadow: 0 0 25px #ffff00; transform-origin: bottom; }
+        .laser.beam-plasma.shoot { animation: plasmaShot 0.2s ease-out; }
+        .laser.beam-lightning { width: 6px; height: 100%; background: #9966ff; box-shadow: 0 0 20px #9966ff; transform-origin: bottom; }
+        .laser.beam-lightning.shoot { animation: lightningShot 0.1s ease-out; }
+        .laser.beam-frost { width: 12px; height: 100%; background: #00ffcc; box-shadow: 0 0 18px #00ffcc; transform-origin: bottom; }
+        .laser.beam-frost.shoot { animation: frostShot 0.25s ease-out; }
+        .laser.beam-nuclear { width: 15px; height: 100%; background: #00ff00; box-shadow: 0 0 30px #00ff00; transform-origin: bottom; }
+        .laser.beam-nuclear.shoot { animation: nuclearShot 0.4s ease-out; }
+        
+        @keyframes blasterShot { 0%{transform:translateX(-50%) scaleY(0); opacity:1} 100%{transform:translateX(-50%) scaleY(1); opacity:0} }
+        @keyframes cannonShot { 0%{bottom:20px; opacity:1; transform:translateX(-50%) scale(0.5)} 80%{bottom:60%; opacity:1; transform:translateX(-50%) scale(1.5)} 100%{bottom:65%; opacity:0; transform:translateX(-50%) scale(2)} }
+        @keyframes vampireShot { 0%{transform:translateX(-50%) scaleY(0); opacity:1} 50%{transform:translateX(-50%) scaleY(1); width:15px} 100%{transform:translateX(-50%) scaleY(0); opacity:0} }
+        @keyframes plasmaShot { 0%{transform:translateX(-50%) scaleY(0); opacity:1} 100%{transform:translateX(-50%) scaleY(1); opacity:0} }
+        @keyframes lightningShot { 0%{transform:translateX(-50%) scaleY(0) scaleX(0); opacity:1} 50%{transform:translateX(-50%) scaleY(1) scaleX(3)} 100%{transform:translateX(-50%) scaleY(1) scaleX(1); opacity:0} }
+        @keyframes frostShot { 0%{transform:translateX(-50%) scaleY(0); opacity:1} 100%{transform:translateX(-50%) scaleY(1); opacity:0} }
+        @keyframes nuclearShot { 0%{transform:translateX(-50%) scaleY(0) scale(0.5); opacity:1} 100%{transform:translateX(-50%) scaleY(1) scale(1.2); opacity:0} }
+
+        /* Obstacles */
+        .obstacle {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #444, #666);
+            border: 3px solid #888;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
+            animation: obstacleFloat 2s ease-in-out infinite;
+            z-index: 6;
+        }
+        .obstacle.hit {
+            animation: obstacleHit 0.3s ease-out;
+            border-color: #ff0055;
+            box-shadow: 0 0 20px #ff0055;
+        }
+        .obstacle-hp {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: #ff0055;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        @keyframes obstacleFloat {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-10px); }
+        }
+        @keyframes obstacleHit {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+        .math-text { font-family: var(--font-hud); font-size: 2.5rem; color: #fff; text-shadow: 0 0 15px var(--primary); white-space: nowrap; }
+        .math-text.word-problem { font-family: var(--font-ui); font-size: 1.1rem; white-space: normal; line-height: 1.4; color: #ace; text-shadow: none; font-weight: 600; text-align: left; }
+
+        /* Monster Effects */
+        .monster-svg {
+            transition: all 0.3s ease;
+        }
+        .monster-svg.hit {
+            animation: monsterHit 0.6s ease-out;
+        }
+        .monster-svg.defeated {
+            animation: monsterDefeated 1s ease-out forwards;
+        }
+        .monster-svg.split {
+            animation: monsterSplit 0.8s ease-out forwards;
+        }
+        .monster-svg.crack {
+            animation: monsterCrack 0.5s ease-out;
+        }
+        
+        /* Monster Hit Animations */
+        @keyframes monsterHit {
+            0% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+            25% { transform: scale(1.1) rotate(-5deg); filter: brightness(1.5) hue-rotate(0deg); }
+            50% { transform: scale(0.95) rotate(5deg); filter: brightness(2) hue-rotate(90deg); }
+            75% { transform: scale(1.05) rotate(-2deg); filter: brightness(1.2) hue-rotate(180deg); }
+            100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+        }
+        
+        @keyframes monsterDefeated {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; filter: brightness(1); }
+            25% { transform: scale(1.2) rotate(15deg); opacity: 0.8; filter: brightness(2) hue-rotate(180deg); }
+            50% { transform: scale(0.8) rotate(-10deg); opacity: 0.6; filter: brightness(3) hue-rotate(360deg); }
+            75% { transform: scale(0.3) rotate(45deg); opacity: 0.3; filter: brightness(0.5) blur(2px); }
+            100% { transform: scale(0) rotate(90deg); opacity: 0; filter: brightness(0) blur(5px); }
+        }
+        
+        @keyframes monsterSplit {
+            0% { transform: scale(1); opacity: 1; }
+            30% { transform: scale(1.1) rotateY(0deg); opacity: 0.9; }
+            60% { transform: scale(0.9) rotateY(180deg); opacity: 0.6; }
+            80% { transform: scale(0.5) rotateY(360deg) skewX(45deg); opacity: 0.3; }
+            100% { transform: scale(0.1) rotateY(540deg) skewX(90deg); opacity: 0; }
+        }
+        
+        @keyframes monsterCrack {
+            0% { filter: brightness(1); }
+            25% { filter: brightness(2) contrast(2); }
+            50% { filter: brightness(3) contrast(3) saturate(0); }
+            75% { filter: brightness(1.5) contrast(1.5) saturate(0.5); }
+            100% { filter: brightness(1); }
+        }
+        
+        /* Enhanced Monster Defeat Effects */
+        @keyframes monsterShatter {
+            0% { 
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+                clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+            }
+            20% {
+                transform: scale(1.1) rotate(-5deg);
+                filter: brightness(3) hue-rotate(90deg);
+                clip-path: polygon(0% 0%, 50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            }
+            40% {
+                transform: scale(0.9) rotate(10deg);
+                clip-path: polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%);
+            }
+            60% {
+                transform: scale(0.7) rotate(-15deg);
+                clip-path: polygon(40% 0%, 60% 0%, 100% 40%, 100% 60%, 60% 100%, 40% 100%, 0% 60%, 0% 40%);
+                opacity: 0.6;
+            }
+            80% {
+                transform: scale(0.3) rotate(45deg);
+                opacity: 0.2;
+                clip-path: polygon(45% 0%, 55% 0%, 55% 45%, 100% 45%, 100% 55%, 55% 55%, 55% 100%, 45% 100%, 45% 55%, 0% 55%, 0% 45%, 45% 45%);
+            }
+            100% {
+                transform: scale(0) rotate(90deg);
+                opacity: 0;
+                clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%);
+            }
+        }
+        
+        @keyframes monsterBreakApart {
+            0% { 
+                transform: scale(1);
+                opacity: 1;
+                box-shadow: 0 0 0 rgba(255,255,255,0);
+            }
+            15% {
+                transform: scale(1.05);
+                box-shadow: 0 0 20px rgba(255,255,255,0.8);
+                filter: brightness(2);
+            }
+            30% {
+                transform: scale(1.1) skewX(10deg);
+                box-shadow: 
+                    -10px -10px 0 rgba(255,0,0,0.8),
+                    10px -10px 0 rgba(0,255,0,0.8),
+                    -10px 10px 0 rgba(0,0,255,0.8),
+                    10px 10px 0 rgba(255,255,0,0.8);
+            }
+            50% {
+                transform: scale(0.8) skewX(-10deg) skewY(5deg);
+                box-shadow: 
+                    -20px -20px 0 rgba(255,0,0,0.6),
+                    20px -20px 0 rgba(0,255,0,0.6),
+                    -20px 20px 0 rgba(0,0,255,0.6),
+                    20px 20px 0 rgba(255,255,0,0.6);
+                opacity: 0.7;
+            }
+            70% {
+                transform: scale(0.5) rotateZ(180deg) skewX(-20deg);
+                box-shadow: 
+                    -30px -30px 0 rgba(255,0,0,0.3),
+                    30px -30px 0 rgba(0,255,0,0.3),
+                    -30px 30px 0 rgba(0,0,255,0.3),
+                    30px 30px 0 rgba(255,255,0,0.3);
+                opacity: 0.4;
+            }
+            85% {
+                transform: scale(0.2) rotateZ(360deg);
+                box-shadow: 
+                    -40px -40px 0 rgba(255,0,0,0.1),
+                    40px -40px 0 rgba(0,255,0,0.1),
+                    -40px 40px 0 rgba(0,0,255,0.1),
+                    40px 40px 0 rgba(255,255,0,0.1);
+                opacity: 0.2;
+            }
+            100% {
+                transform: scale(0) rotateZ(720deg);
+                box-shadow: 0 0 0 rgba(255,255,255,0);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes monsterExplode {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+                border-radius: 50%;
+                background: radial-gradient(circle, transparent 0%, transparent 100%);
+            }
+            20% {
+                transform: scale(1.2);
+                border-radius: 30%;
+                background: radial-gradient(circle, rgba(255,255,0,0.3) 0%, transparent 70%);
+                box-shadow: 0 0 30px rgba(255,165,0,0.8);
+            }
+            40% {
+                transform: scale(1.5);
+                border-radius: 20%;
+                background: radial-gradient(circle, rgba(255,69,0,0.6) 0%, rgba(255,255,0,0.3) 50%, transparent 80%);
+                box-shadow: 0 0 50px rgba(255,69,0,0.9);
+            }
+            60% {
+                transform: scale(0.8);
+                border-radius: 10%;
+                background: radial-gradient(circle, rgba(255,0,0,0.8) 0%, rgba(255,69,0,0.5) 40%, transparent 70%);
+                box-shadow: 0 0 70px rgba(255,0,0,1);
+                opacity: 0.8;
+            }
+            80% {
+                transform: scale(0.3);
+                border-radius: 5%;
+                background: radial-gradient(circle, rgba(139,69,19,0.6) 0%, transparent 50%);
+                box-shadow: 0 0 20px rgba(139,69,19,0.5);
+                opacity: 0.4;
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0;
+                background: transparent;
+                box-shadow: none;
+            }
+        }
+        
+        /* Monster Effect Classes */
+        .monster-svg.shatter { animation: monsterShatter 0.8s ease-out forwards; }
+        .monster-svg.break-apart { animation: monsterBreakApart 0.8s ease-out forwards; }  
+        .monster-svg.explode { animation: monsterExplode 0.8s ease-out forwards; }
+        .monster-svg.split { animation: monsterSplit 0.6s ease-out forwards; }
+        .monster-svg.crack { animation: monsterCrack 0.6s ease-out forwards; }
+        .monster-svg.hit { animation: monsterHit 0.4s ease-out forwards; }
+        .monster-svg.defeated { animation: monsterDefeated 1.0s ease-out forwards; }
+
+        /* Obstacles */
+        .obstacle {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #444, #666);
+            border: 3px solid #888;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
+            animation: obstacleFloat 2s ease-in-out infinite;
+            z-index: 6;
+        }
+        .obstacle.hit {
+            animation: obstacleHit 0.3s ease-out;
+            border-color: #ff0055;
+            box-shadow: 0 0 20px #ff0055;
+        }
+        .obstacle-hp {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: #ff0055;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        @keyframes obstacleFloat {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-10px); }
+        }
+        @keyframes obstacleHit {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        /* Controls */
+        .input-row { margin-bottom: 15px; position: relative; }
+        .game-input { 
+            width: 100%; 
+            height: 70px; 
+            background: rgba(0,0,0,0.5); 
+            border: 1px solid rgba(255,255,255,0.2); 
+            border-radius: 15px; 
+            color: var(--primary); 
+            font-family: var(--font-hud); 
+            text-align: center; 
+            outline: none;
+            /* Prevent zoom and scroll on mobile */
+            transform: translateZ(0);
+            -webkit-backface-visibility: hidden;
+        }
+        
+        /* High specificity font-size override */
+        input#game-input.game-input[type="number"] {
+            font-size: 3.5rem !important;
+        }
+        
+        /* Hide number input spinners */
+        .game-input::-webkit-outer-spin-button,
+        .game-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        .game-input[type=number] {
+            -moz-appearance: textfield;
+        }
+        .game-input:focus { 
+            border-color: var(--primary); 
+            background: rgba(0,10,20,0.8);
+            /* Prevent mobile scroll issues */
+            position: relative;
+            z-index: 999;
+        }
+        
+        /* Mobile input optimization */
+        @media (max-width: 599px) {
+            .game-input {
+                height: 60px !important;
+                /* Ensure no zoom on mobile */
+                -webkit-text-size-adjust: 100%;
+            }
+            
+            /* High specificity mobile font-size */
+            input#game-input.game-input[type="number"] {
+                font-size: 3.2rem !important; /* Mobile size */
+            }
+            
+            .game-input:focus {
+                /* Prevent viewport jumping on mobile */
+                transform: translateZ(0);
+                -webkit-transform: translateZ(0);
+            }
+        }
+        .game-input.jammed { border-color: var(--danger); color: var(--danger); background: rgba(50,0,0,0.3); }
+        .jam-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: var(--danger); font-family: var(--font-hud); font-size: 1.5rem; display: flex; align-items: center; justify-content: center; border-radius: 15px; animation: flash 0.5s infinite; z-index: 10; }
+        
+        .skill-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .skill-btn { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid #444; border-radius: 10px; padding: 8px; display: flex; flex-direction: column; align-items: center; }
+        .skill-icon { font-size: 1.2rem; margin-bottom: 3px; }
+        .skill-cost { font-size: 0.7rem; color: var(--secondary); }
+
+        .hud-top { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-end; 
+            padding: 15px 20px; 
+            background: linear-gradient(135deg, rgba(0, 20, 40, 0.95), rgba(10, 30, 50, 0.85));
+            border: 2px solid rgba(0, 242, 255, 0.4);
+            border-radius: 20px; 
+            margin-bottom: 15px; 
+            box-shadow: 
+                0 0 30px rgba(0, 242, 255, 0.2),
+                inset 0 0 20px rgba(0, 242, 255, 0.05);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hud-top::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            animation: scanLine 3s linear infinite;
+        }
+        
+        @keyframes scanLine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        .shield-box { 
+            flex: 1; 
+            margin: 0 15px;
+            background: linear-gradient(135deg, rgba(0, 50, 100, 0.3), rgba(0, 30, 60, 0.2));
+            padding: 12px 15px; 
+            border-radius: 15px; 
+            border: 2px solid rgba(0, 242, 255, 0.3);
+            box-shadow: 
+                0 0 20px rgba(0, 242, 255, 0.2),
+                inset 0 0 15px rgba(0, 242, 255, 0.05);
+            position: relative;
+        }
+        
+        .shield-box::after {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            background: linear-gradient(45deg, transparent, rgba(0, 242, 255, 0.1), transparent);
+            border-radius: 15px;
+            z-index: -1;
+        }
+        .bar-bg { 
+            height: 8px; 
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 6px; 
+            overflow: hidden; 
+            position: relative;
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+            margin: 5px 0;
+        }
+        
+        .bar-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.1) 50%, 
+                transparent 100%
+            );
+            animation: shimmer 2s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+        .bar-fill { height: 100%; width: 100%; transition: width 0.3s; }
+        .hp-fill { 
+            background: linear-gradient(90deg, #00ff88, #00cc66); 
+            box-shadow: 
+                0 0 15px rgba(0, 255, 136, 0.6),
+                inset 0 0 8px rgba(255, 255, 255, 0.3);
+            height: 100%; 
+            transition: width 0.5s ease;
+            border-radius: 6px;
+            position: relative;
+        }
+        
+        .hp-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0.4), 
+                rgba(255, 255, 255, 0.1)
+            );
+            border-radius: 6px 6px 0 0;
+        }
+        .heat-container { 
+            margin-top: 8px; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            opacity: 0; 
+            transition: opacity 0.3s;
+            position: relative;
+        }
+        .heat-container.active { opacity: 1; }
+        
+        .heat-label { 
+            font-size: 0.65rem; 
+            color: var(--danger); 
+            font-weight: bold;
+            text-shadow: 0 0 5px var(--danger);
+        }
+        
+        .heat-bg { 
+            flex: 1; 
+            height: 6px; 
+            background: rgba(50, 0, 0, 0.8);
+            border-radius: 5px;
+            border: 1px solid rgba(255, 51, 51, 0.4);
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.7);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .heat-fill { 
+            height: 100%; 
+            width: 0%; 
+            background: linear-gradient(90deg, #ff6600, #ff0000); 
+            transition: width 0.2s; 
+            box-shadow: 
+                0 0 10px rgba(255, 102, 0, 0.8),
+                inset 0 0 4px rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            position: relative;
+        }
+        
+        .heat-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0.6), 
+                rgba(255, 255, 255, 0.2)
+            );
+            border-radius: 5px 5px 0 0;
+        }
+        
+        /* Enhanced Level Badge */
+        .level-badge { 
+            background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+            color: #000; 
+            font-weight: bold; 
+            padding: 8px 15px; 
+            border-radius: 12px; 
+            font-family: var(--font-hud); 
+            font-size: 1.1rem; 
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            box-shadow: 
+                0 0 15px rgba(0, 242, 255, 0.5),
+                inset 0 0 10px rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: inline-block;
+        }
+        
+        /* Enhanced Pause Button */
+        .pause-btn {
+            font-size: 1.5rem; 
+            cursor: pointer;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            color: #fff;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+        
+        .pause-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+            border-color: var(--primary);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+        }
+
+        .shop-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; padding: 10px; background: transparent; border: 1px solid #444; color: #888; border-radius: 8px; }
+        .tab-btn.active { border-color: var(--primary); color: #fff; background: rgba(0,242,255,0.1); }
+        .grid-shop { 
+            display: grid; 
+            grid-template-columns: 1fr; 
+            gap: 15px; 
+            max-height: 400px; 
+            overflow-y: auto; 
+            padding-right: 10px;
+        }
+        .shop-item { 
+            background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 15px; 
+            padding: 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px;
+            transition: all 0.3s;
+        }
+        .shop-item:hover {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(0,242,255,0.1), rgba(0,150,200,0.05));
+            box-shadow: 0 0 20px rgba(0,242,255,0.2);
+            transform: translateY(-2px);
+        }
+        .shop-icon { 
+            font-size: 2.5rem; 
+            width: 60px; 
+            height: 60px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            background: rgba(0,242,255,0.1);
+            border-radius: 50%;
+            border: 2px solid rgba(0,242,255,0.3);
+        }
+        .shop-details { flex: 1; }
+        .shop-name { font-size: 1.1rem; font-weight: bold; color: var(--primary); margin-bottom: 5px; }
+        .shop-desc { font-size: 0.85rem; color: #aaa; line-height: 1.4; margin-bottom: 8px; }
+        .shop-price { font-size: 1rem; color: var(--secondary); font-weight: bold; }
+        .shop-btn { 
+            background: linear-gradient(135deg, var(--secondary), #cc8800); 
+            border: none; 
+            color: #000; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .shop-btn:hover {
+            background: linear-gradient(135deg, #ffee00, #ffaa00);
+            box-shadow: 0 0 15px rgba(255,215,0,0.4);
+        }
+        .shop-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+        .card-item { background: rgba(255,255,255,0.03); border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; display: flex; flex-direction: column; align-items: center; position: relative; }
+        .card-item.equipped { border-color: var(--success); background: rgba(0,255,157,0.05); }
+        .card-item.equipped::after { content: 'ĐANG DÙNG'; position: absolute; top: 5px; right: 5px; font-size: 0.5rem; background: var(--success); color: #000; padding: 2px 4px; border-radius: 4px; font-weight: bold; }
+        .item-btn { width: 100%; padding: 6px; border-radius: 6px; font-size: 0.8rem; background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        .item-btn.equip { background: var(--primary); color: #000; }
+
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .overlay.active { display: flex; animation: zoomIn 0.3s; }
+        .modal { background: #0b1118; border: 1px solid var(--primary); border-radius: 20px; padding: 30px; width: 90%; text-align: center; }
+        
+        /* Pause overlay specific styling */
+        .pause-overlay .modal {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid #00f2ff;
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.5), inset 0 0 20px rgba(0, 242, 255, 0.1);
+            max-width: 350px;
+        }
+        .pause-overlay h2 {
+            color: #00f2ff;
+            font-family: var(--font-hud);
+            font-size: 2.0rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px #00f2ff;
+        }
+        .pause-overlay .btn-main:first-of-type {
+            background: linear-gradient(135deg, #00f2ff, #0088cc);
+            border-color: #00f2ff;
+            color: #000;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
+        }
+        .pause-overlay .btn-main:first-of-type:hover {
+            background: linear-gradient(135deg, #00d4ff, #0066aa);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.6);
+        }
+        .pause-overlay .btn-main:last-of-type {
+            background: rgba(255, 0, 85, 0.1);
+            border-color: #ff0055;
+            color: #ff0055;
+            box-shadow: 0 0 10px rgba(255, 0, 85, 0.3);
+        }
+        .pause-overlay .btn-main:last-of-type:hover {
+            background: rgba(255, 0, 85, 0.2);
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.5);
+        }
+        .float-text { position: absolute; font-family: var(--font-hud); font-size: 2rem; z-index: 50; animation: floatUp 0.8s forwards; text-shadow: 2px 2px 0 #000; pointer-events: none; font-weight: 900; }
+        @keyframes floatUp { 0% {transform:translate(-50%,0);opacity:0} 20%{opacity:1;transform:translate(-50%,-20px)} 100%{opacity:0;transform:translate(-50%,-60px)} }
+        @keyframes zoomIn { from{transform:scale(0.9);opacity:0} to{transform:scale(1);opacity:1} }
+        @keyframes flash { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .hit-effect { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
+    </style>
+</head>
+<body>
+    <!-- ENHANCED HAMBURGER MENU FOR GAME SWITCHING -->
+    <div id="game-menu" style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        background: linear-gradient(135deg, rgba(0, 30, 60, 0.95), rgba(0, 20, 40, 0.9));
+        border: 2px solid var(--primary);
+        border-radius: 12px;
+        padding: 12px 16px;
+        cursor: pointer;
+        color: var(--primary);
+        font-size: 20px;
+        backdrop-filter: blur(15px);
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        font-family: var(--font-hud);
+        box-shadow: 
+            0 0 20px rgba(0, 242, 255, 0.3),
+            inset 0 0 15px rgba(0, 242, 255, 0.05);
+        font-weight: bold;
+        text-shadow: 0 0 10px var(--primary);
+        user-select: none;
+    " onclick="showGameSelector()" title="Trạm Điều Khiển - Chọn Game"
+    onmouseover="
+        this.style.transform = 'scale(1.1) rotate(90deg)';
+        this.style.boxShadow = '0 0 30px rgba(0, 242, 255, 0.6), inset 0 0 20px rgba(0, 242, 255, 0.1)';
+        this.style.borderColor = 'var(--secondary)';
+        this.style.color = 'var(--secondary)';
+    "
+    onmouseout="
+        this.style.transform = 'scale(1) rotate(0deg)';
+        this.style.boxShadow = '0 0 20px rgba(0, 242, 255, 0.3), inset 0 0 15px rgba(0, 242, 255, 0.05)';
+        this.style.borderColor = 'var(--primary)';
+        this.style.color = 'var(--primary)';
+    "
+    onmousedown="this.style.transform = 'scale(0.95) rotate(90deg)'"
+    onmouseup="this.style.transform = 'scale(1.1) rotate(90deg)'">
+        ☰
+    </div>
+
+    <!-- ENHANCED TLBB STYLE GAME SELECTOR OVERLAY -->
+    <div id="game-selector-overlay" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(0, 20, 40, 0.9));
+        z-index: 10000;
+        display: none;
+        backdrop-filter: blur(15px);
+        animation: fadeIn 0.5s ease-out;
+    " onclick="hideGameSelector()">
+        <div style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #0a1a2a 0%, #1a2a3a 50%, #0a1a2a 100%);
+            border: 3px solid var(--primary);
+            border-radius: 25px;
+            padding: 40px 35px;
+            text-align: center;
+            color: var(--primary);
+            min-width: 380px;
+            max-width: 450px;
+            font-family: var(--font-hud);
+            box-shadow: 
+                0 0 50px rgba(0, 242, 255, 0.4),
+                inset 0 0 30px rgba(0, 242, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        " onclick="event.stopPropagation()">
+            
+            <!-- Decorative Header -->
+            <div style="
+                background: linear-gradient(90deg, transparent, var(--primary), transparent);
+                height: 2px;
+                width: 80%;
+                margin: 0 auto 20px auto;
+                opacity: 0.6;
+            "></div>
+            
+            <h2 style="
+                color: var(--primary); 
+                margin-bottom: 25px;
+                font-size: 28px;
+                text-shadow: 0 0 20px var(--primary);
+                font-weight: bold;
+            ">🌟 TRẠM ĐIỀU KHIỂN</h2>
+            
+            <p style="
+                color: #888;
+                margin-bottom: 30px;
+                font-size: 14px;
+            ">Chọn nhiệm vụ để tiếp tục hành trình</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <button onclick="window.location.href='./main.html'" class="game-nav-btn" style="
+                    background: linear-gradient(135deg, rgba(0, 242, 255, 0.2), rgba(0, 150, 255, 0.1));
+                    border: 2px solid var(--primary);
+                    color: var(--primary);
+                    padding: 15px 20px;
+                    border-radius: 15px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    font-weight: bold;
+                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                    font-family: var(--font-hud);
+                    position: relative;
+                    overflow: hidden;
+                    text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                ">
+                    <span style="font-size: 20px;">🏠</span>
+                    <span>TRẠM CHÍNH - Menu Tổng</span>
+                </button>
+                
+                <button onclick="window.location.href='./index.html'" class="game-nav-btn" style="
+                    background: linear-gradient(135deg, rgba(0, 255, 157, 0.2), rgba(0, 200, 120, 0.1));
+                    border: 2px solid var(--success);
+                    color: var(--success);
+                    padding: 15px 20px;
+                    border-radius: 15px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    font-weight: bold;
+                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                    font-family: var(--font-hud);
+                    position: relative;
+                    overflow: hidden;
+                    text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                ">
+                    <span style="font-size: 20px;">🖐️</span>
+                    <span>TOÁN SỐ - Finger Math</span>
+                </button>
+                
+                <button onclick="window.location.href='./tu tiên.html'" class="game-nav-btn" style="
+                    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 180, 0, 0.1));
+                    border: 2px solid var(--secondary);
+                    color: var(--secondary);
+                    padding: 15px 20px;
+                    border-radius: 15px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    font-weight: bold;
+                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                    font-family: var(--font-hud);
+                    position: relative;
+                    overflow: hidden;
+                    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                ">
+                    <span style="font-size: 20px;">⚔️</span>
+                    <span>TU TIÊN - Thiên Đạo RPG</span>
+                </button>
+            </div>
+            
+            <!-- Close Button -->
+            <button onclick="hideGameSelector()" style="
+                background: linear-gradient(135deg, rgba(255, 51, 51, 0.3), rgba(200, 0, 0, 0.2));
+                border: 2px solid var(--danger);
+                color: var(--danger);
+                padding: 12px 20px;
+                border-radius: 12px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+                margin-top: 25px;
+                font-family: var(--font-hud);
+                transition: all 0.3s ease;
+                text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
+            " onmouseover="this.style.background='linear-gradient(135deg, rgba(255, 51, 51, 0.5), rgba(200, 0, 0, 0.3))'; this.style.transform='scale(1.05)'" onmouseout="this.style.background='linear-gradient(135deg, rgba(255, 51, 51, 0.3), rgba(200, 0, 0, 0.2))'; this.style.transform='scale(1)'">
+                ✖ ĐÓNG TRẠM
+            </button>
+            
+            <!-- Decorative corners -->
+            <div style="
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                width: 25px;
+                height: 25px;
+                border-top: 3px solid var(--primary);
+                border-left: 3px solid var(--primary);
+                opacity: 0.7;
+            "></div>
+            <div style="
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: 25px;
+                height: 25px;
+                border-top: 3px solid var(--primary);
+                border-right: 3px solid var(--primary);
+                opacity: 0.7;
+            "></div>
+            <div style="
+                position: absolute;
+                bottom: 10px;
+                left: 10px;
+                width: 25px;
+                height: 25px;
+                border-bottom: 3px solid var(--primary);
+                border-left: 3px solid var(--primary);
+                opacity: 0.7;
+            "></div>
+            <div style="
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+                width: 25px;
+                height: 25px;
+                border-bottom: 3px solid var(--primary);
+                border-right: 3px solid var(--primary);
+                opacity: 0.7;
+            "></div>
+            
+            <!-- Animated background particles -->
+            <div style="
+                position: absolute;
+                top: 20%;
+                left: 10%;
+                width: 3px;
+                height: 3px;
+                background: var(--primary);
+                border-radius: 50%;
+                opacity: 0.5;
+                animation: float 4s ease-in-out infinite;
+            "></div>
+            <div style="
+                position: absolute;
+                top: 60%;
+                right: 15%;
+                width: 2px;
+                height: 2px;
+                background: var(--secondary);
+                border-radius: 50%;
+                opacity: 0.7;
+                animation: float 3s ease-in-out infinite reverse;
+            "></div>
+        </div>
+    </div>
+
+    <canvas id="bg-canvas"></canvas>
+    <div class="crt-scanline"></div>
+
+    <!-- GM CONSOLE (Enhanced) -->
+    <div class="gm-panel" id="gm-panel">
+        <div class="gm-header">⚡ GM CONSOLE v2.0 ⚡</div>
+        
+        <!-- Panel Control -->
+        <div class="gm-section">
+            <button class="gm-btn danger" onclick="closeGMPanel()">❌ CLOSE PANEL</button>
+        </div>
+        
+        <!-- Basic Commands -->
+        <div class="gm-section">
+            <div class="gm-section-title">💰 Resources</div>
+            <button class="gm-btn" onclick="gm_money()">💵 +1000 STARS</button>
+            <button class="gm-btn special" onclick="gm_godMode()">👑 GOD MODE</button>
+        </div>
+        
+        <!-- Game Control -->
+        <div class="gm-section">
+            <div class="gm-section-title">🎮 Game Control</div>
+            <button class="gm-btn" onclick="gm_unlock()">🔓 UNLOCK ALL</button>
+            <button class="gm-btn" onclick="gm_kill()">💀 INSTANT KILL</button>
+            <button class="gm-btn" onclick="gm_skip()">⏭️ SKIP LEVEL</button>
+        </div>
+        
+        <!-- Time Control -->
+        <div class="gm-section">
+            <div class="gm-section-title">⏱️ Time Control</div>
+            <div style="text-align:center; color:#00ff00; font-size:0.7rem; margin-bottom:5px;">Current: x<span id="gm-time-display">1.0</span></div>
+            <div class="gm-grid">
+                <button class="gm-btn" onclick="adjustGameTime(0.5)">x0.5</button>
+                <button class="gm-btn" onclick="adjustGameTime(1.0)">x1.0</button>
+                <button class="gm-btn" onclick="adjustGameTime(2.0)">x2.0</button>
+            </div>
+            <div style="margin-top:8px; display:flex; gap:5px;">
+                <input type="number" id="custom-time" min="0.1" max="10" step="0.1" value="1.0" style="width:60px; background:#003300; border:1px solid #00ff00; color:#00ff00; padding:4px; font-size:0.7rem; text-align:center; font-family:'Courier New', monospace;">
+                <button class="gm-btn" style="margin:0; flex:1;" onclick="applyCustomTime()">✓ APPLY</button>
+            </div>
+        </div>
+        
+        <!-- Danger Zone -->
+        <div class="gm-section">
+            <div class="gm-section-title">⚠️ Danger Zone</div>
+            <button class="gm-btn danger" onclick="gm_resetGame()">🗑️ RESET GAME</button>
+        </div>
+        
+        <div class="gm-status">🟢 SYSTEM ACTIVE 🟢</div>
+    </div>
+
+    <div class="game-container">
+        
+        <!-- TLBB STYLE SETTINGS MODAL -->
+        <div id="settings-modal" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            font-family: var(--font-hud);
+            padding: 20px;
+            box-sizing: border-box;
+        ">
+            <div style="
+                background: linear-gradient(135deg, #0a1a2a 0%, #1a2a3a 50%, #0a1a2a 100%);
+                border: 2px solid var(--primary);
+                border-radius: 20px;
+                padding: 30px;
+                min-width: 450px;
+                max-width: 500px;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 
+                    0 0 50px rgba(0, 242, 255, 0.3),
+                    inset 0 0 30px rgba(0, 242, 255, 0.05);
+                position: relative;
+            ">
+                <!-- Header -->
+                <div style="
+                    text-align: center;
+                    margin-bottom: 30px;
+                    border-bottom: 1px solid rgba(0, 242, 255, 0.3);
+                    padding-bottom: 20px;
+                ">
+                    <h2 style="
+                        color: var(--primary);
+                        font-size: 28px;
+                        margin: 0;
+                        text-shadow: 0 0 20px var(--primary);
+                        font-weight: bold;
+                    ">⚙️ THIẾT LẬP HỆ THỐNG</h2>
+                    <p style="
+                        color: #888;
+                        margin: 5px 0 0 0;
+                        font-size: 14px;
+                    ">Cài đặt trò chơi và chế độ quản trị</p>
+                </div>
+
+                <!-- Volume Settings -->
+                <div style="margin-bottom: 25px;">
+                    <h3 style="
+                        color: var(--secondary);
+                        font-size: 18px;
+                        margin-bottom: 15px;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    ">🔊 HỆ THỐNG ÂM THANH</h3>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="
+                            color: #fff;
+                            display: block;
+                            margin-bottom: 8px;
+                            font-size: 14px;
+                        ">Nhạc nền:</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="range" id="music-volume-slider" min="0" max="100" value="30" style="
+                                flex: 1;
+                                height: 6px;
+                                background: linear-gradient(to right, var(--primary) 0%, var(--primary) 30%, #333 30%, #333 100%);
+                                border-radius: 5px;
+                                outline: none;
+                                -webkit-appearance: none;
+                            ">
+                            <span id="music-percent" style="
+                                color: var(--primary);
+                                font-weight: bold;
+                                min-width: 40px;
+                                text-align: right;
+                            ">30%</span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="
+                            color: #fff;
+                            display: block;
+                            margin-bottom: 8px;
+                            font-size: 14px;
+                        ">Hiệu ứng âm thanh:</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="range" id="sfx-volume-slider" min="0" max="100" value="50" style="
+                                flex: 1;
+                                height: 6px;
+                                background: linear-gradient(to right, var(--primary) 0%, var(--primary) 50%, #333 50%, #333 100%);
+                                border-radius: 5px;
+                                outline: none;
+                                -webkit-appearance: none;
+                            ">
+                            <span id="sfx-percent" style="
+                                color: var(--primary);
+                                font-weight: bold;
+                                min-width: 40px;
+                                text-align: right;
+                            ">50%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Game Settings -->
+                <div style="
+                    background: linear-gradient(135deg, rgba(0, 242, 255, 0.1), rgba(0, 150, 255, 0.05));
+                    border: 1px solid rgba(0, 242, 255, 0.5);
+                    border-radius: 15px;
+                    padding: 20px;
+                    margin-bottom: 25px;
+                ">
+                    <h3 style="
+                        color: var(--primary);
+                        font-size: 18px;
+                        margin-bottom: 15px;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        text-shadow: 0 0 10px var(--primary);
+                    ">📐 CẤU HÌNH PHÉP TOÁN</h3>
+                    
+                    <!-- Operations -->
+                    <div style="margin-bottom: 15px;">
+                        <label style="color: #fff; font-size: 14px; margin-bottom: 8px; display: block;">Loại phép tính:</label>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                            <button class="math-toggle" data-category="ops" data-value="+" style="
+                                padding: 8px;
+                                background: rgba(0, 0, 0, 0.3);
+                                border: 2px solid #666;
+                                border-radius: 8px;
+                                color: #fff;
+                                font-size: 14px;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 5px;
+                            ">➕ Cộng</button>
+                            <button class="math-toggle" data-category="ops" data-value="-" style="
+                                padding: 8px;
+                                background: rgba(0, 0, 0, 0.3);
+                                border: 2px solid #666;
+                                border-radius: 8px;
+                                color: #fff;
+                                font-size: 14px;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 5px;
+                            ">➖ Trừ</button>
+                            <button class="math-toggle" data-category="ops" data-value="x" style="
+                                padding: 8px;
+                                background: rgba(0, 0, 0, 0.3);
+                                border: 2px solid #666;
+                                border-radius: 8px;
+                                color: #fff;
+                                font-size: 14px;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 5px;
+                            ">✖️ Nhân</button>
+                            <button class="math-toggle" data-category="ops" data-value=":" style="
+                                padding: 8px;
+                                background: rgba(0, 0, 0, 0.3);
+                                border: 2px solid #666;
+                                border-radius: 8px;
+                                color: #fff;
+                                font-size: 14px;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 5px;
+                            ">➗ Chia</button>
+                        </div>
+                    </div>
+
+                    <!-- Number Range -->
+                    <div style="margin-bottom: 15px;">
+                        <label style="color: #fff; font-size: 14px; margin-bottom: 8px; display: block;">Phạm vi số:</label>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                            <button class="math-toggle" data-category="magnitude" data-value="units" style="
+                                padding: 8px;
+                                background: rgba(0, 0, 0, 0.3);
+                                border: 2px solid #666;
+                                border-radius: 8px;
+                                color: #fff;
+                                font-size: 12px;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                                text-align: center;
+                            ">Đơn Vị<br><span style='color: #888'>1-9</span></button>
+                            <button class="math-toggle" data-category="magnitude" data-value="tens" style="
+                                padding: 8px;
+                                background: rgba(0, 0, 0, 0.3);
+                                border: 2px solid #666;
+                                border-radius: 8px;
+                                color: #fff;
+                                font-size: 12px;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                                text-align: center;
+                            ">Hàng Chục<br><span style='color: #888'>10-99</span></button>
+                            <button class="math-toggle" data-category="magnitude" data-value="hundreds" style="
+                                padding: 8px;
+                                background: rgba(0, 0, 0, 0.3);
+                                border: 2px solid #666;
+                                border-radius: 8px;
+                                color: #fff;
+                                font-size: 12px;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                                text-align: center;
+                            ">Hàng Trăm<br><span style='color: #888'>100-999</span></button>
+                            <button class="math-toggle" data-category="magnitude" data-value="thousands" style="
+                                padding: 8px;
+                                background: rgba(0, 0, 0, 0.3);
+                                border: 2px solid #666;
+                                border-radius: 8px;
+                                color: #fff;
+                                font-size: 12px;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                                text-align: center;
+                            ">Hàng Nghìn<br><span style='color: #888'>1000+</span></button>
+                        </div>
+                    </div>
+
+                    <!-- Difficulty -->
+                    <div style="margin-bottom: 15px;">
+                        <label style="color: #fff; font-size: 14px; margin-bottom: 8px; display: block;">Độ khó:</label>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 8px;">
+                            <button class="math-toggle" data-category="diff" data-value="no-carry" style="
+                                padding: 8px;
+                                background: rgba(0, 0, 0, 0.3);
+                                border: 2px solid #666;
+                                border-radius: 8px;
+                                color: #fff;
+                                font-size: 14px;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                                text-align: center;
+                            ">Không Nhớ</button>
+                            <button class="math-toggle" data-category="diff" data-value="carry" style="
+                                padding: 8px;
+                                background: rgba(0, 0, 0, 0.3);
+                                border: 2px solid #666;
+                                border-radius: 8px;
+                                color: #fff;
+                                font-size: 14px;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                                text-align: center;
+                            ">Có Nhớ</button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                            <button class="math-toggle" data-category="type" data-value="normal" style="
+                                padding: 8px;
+                                background: rgba(0, 0, 0, 0.3);
+                                border: 2px solid #666;
+                                border-radius: 8px;
+                                color: #fff;
+                                font-size: 14px;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                                text-align: center;
+                            ">Cơ Bản</button>
+                            <button class="math-toggle" data-category="type" data-value="find-x" style="
+                                padding: 8px;
+                                background: rgba(0, 0, 0, 0.3);
+                                border: 2px solid #666;
+                                border-radius: 8px;
+                                color: #fff;
+                                font-size: 14px;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                                text-align: center;
+                            ">Tìm X</button>
+                            <button class="math-toggle" data-category="type" data-value="word" style="
+                                padding: 8px;
+                                background: rgba(0, 0, 0, 0.3);
+                                border: 2px solid #666;
+                                border-radius: 8px;
+                                color: #fff;
+                                font-size: 14px;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                                text-align: center;
+                            ">Toán Đố</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GM Section -->
+                <div style="
+                    background: linear-gradient(135deg, rgba(255, 51, 51, 0.1), rgba(255, 100, 100, 0.05));
+                    border: 1px solid rgba(255, 51, 51, 0.5);
+                    border-radius: 15px;
+                    padding: 20px;
+                    margin-bottom: 25px;
+                ">
+                    <h3 style="
+                        color: #ff3333;
+                        font-size: 18px;
+                        margin-bottom: 15px;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        text-shadow: 0 0 10px #ff3333;
+                    ">🔥 CHẾ ĐỘ QUẢN TRỊ VIÊN</h3>
+                    
+                    <div style="
+                        background: rgba(0, 0, 0, 0.3);
+                        border: 1px solid #444;
+                        border-radius: 10px;
+                        padding: 15px;
+                        margin-bottom: 15px;
+                    ">
+                        <input type="password" id="gm-password-input" placeholder="Nhập mật khẩu quản trị viên..." style="
+                            width: 100%;
+                            padding: 12px 15px;
+                            background: rgba(0, 0, 0, 0.6);
+                            border: 2px solid #666;
+                            border-radius: 8px;
+                            color: #fff;
+                            font-size: 14px;
+                            font-family: var(--font-hud);
+                            outline: none;
+                            transition: all 0.3s ease;
+                        ">
+                    </div>
+                    
+                    <button id="gm-activate-btn" onclick="activateGM()" style="
+                        width: 100%;
+                        padding: 12px;
+                        background: linear-gradient(135deg, #ff3333, #cc0000);
+                        border: 2px solid #ff6666;
+                        border-radius: 8px;
+                        color: #fff;
+                        font-family: var(--font-hud);
+                        font-size: 16px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+                    ">⚡ KÍCH HOẠT QUYỀN NĂNG</button>
+                </div>
+
+                <!-- Close Button -->
+                <button onclick="closeSettings()" style="
+                    width: 100%;
+                    padding: 15px;
+                    background: linear-gradient(135deg, #666, #333);
+                    border: 2px solid #888;
+                    border-radius: 10px;
+                    color: #fff;
+                    font-family: var(--font-hud);
+                    font-size: 16px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                ">✖ ĐÓNG THIẾT LẬP</button>
+                
+                <!-- Decorative corners -->
+                <div style="
+                    position: absolute;
+                    top: 10px;
+                    left: 10px;
+                    width: 20px;
+                    height: 20px;
+                    border-top: 2px solid var(--primary);
+                    border-left: 2px solid var(--primary);
+                "></div>
+                <div style="
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    width: 20px;
+                    height: 20px;
+                    border-top: 2px solid var(--primary);
+                    border-right: 2px solid var(--primary);
+                "></div>
+                <div style="
+                    position: absolute;
+                    bottom: 10px;
+                    left: 10px;
+                    width: 20px;
+                    height: 20px;
+                    border-bottom: 2px solid var(--primary);
+                    border-left: 2px solid var(--primary);
+                "></div>
+                <div style="
+                    position: absolute;
+                    bottom: 10px;
+                    right: 10px;
+                    width: 20px;
+                    height: 20px;
+                    border-bottom: 2px solid var(--primary);
+                    border-right: 2px solid var(--primary);
+                "></div>
+            </div>
+        </div>
+
+        <!-- HOME SCREEN -->
+        <div id="home-screen" class="screen active">
+            <button class="settings-btn" onclick="openSettings()">⚙️</button>
+            <h1 class="title">ASTEROID MINER</h1>
+            <div class="subtitle">THE ARCHITECT</div>
+            
+            <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px; margin-bottom:20px;">
+                <span style="color:var(--secondary); font-weight:bold;">⭐ <span id="home-stardust">0</span></span>
+                <span style="color:var(--primary); font-weight:bold;">🎖️ <span id="home-rank">Tân Binh</span></span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px;" id="level-grid"></div>
+
+            <button class="btn-fire" style="margin-bottom:15px; background:linear-gradient(135deg, #ff0055, #800020); border-color:#ff5555; box-shadow:0 0 15px #ff0055" onclick="startGame('endless')">💀 SINH TỒN VÔ TẬN</button>
+
+            <div style="margin-top:auto">
+                <button class="btn-main" onclick="openShop()">🛠️ KHO VŨ KHÍ</button>
+                <button class="btn-main" style="border-color:#888; color:#aaa" onclick="startGame('zen')">🧘 ZEN MODE</button>
+            </div>
+        </div>
+
+        <!-- SHOP SCREEN -->
+        <div id="shop-screen" class="screen">
+            <h2 style="text-align:center; color:var(--primary); font-family:var(--font-hud); margin-bottom:15px;">KHO VŨ KHÍ</h2>
+            <div class="shop-tabs">
+                <button class="tab-btn active" onclick="filterShop('weapon', this)">VŨ KHÍ</button>
+                <button class="tab-btn" onclick="filterShop('item', this)">DỤNG CỤ</button>
+            </div>
+            <div class="grid-shop" id="shop-grid"></div>
+            <button class="btn-main" onclick="switchScreen('home-screen')" style="margin-top:auto">QUAY VỀ</button>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="game-screen" class="screen">
+            <div class="hud-top">
+                <div>
+                    <div class="level-badge" id="hud-level">LV.1</div>
+                    <div style="font-size:0.8rem; color:#888" id="hud-progress">0/10</div>
+                </div>
+                <div class="shield-box">
+                    <div class="shield-label" style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--primary); margin-bottom:3px;">
+                        <span>SHIELD</span> <span id="hud-hp-text">100</span>
+                    </div>
+                    <div class="bar-bg"><div class="bar-fill hp-fill" id="hud-hp-bar"></div></div>
+                    <div class="heat-container" id="heat-ui">
+                        <span class="heat-label">HEAT</span>
+                        <div class="heat-bg"><div class="heat-fill" id="heat-bar"></div></div>
+                    </div>
+                </div>
+                <div class="pause-btn" onclick="showPauseOverlay()">⏸️</div>
+            </div>
+
+            <div class="viewport" id="viewport">
+                <div class="grid-lines"></div>
+                <div class="threat-strip"><div class="threat-fill" id="threat-bar"></div></div>
+                
+                <div class="monster-area" id="monster-area"></div>
+                <div class="obstacle-area" id="obstacle-area"></div>
+                <div class="laser" id="laser"></div>
+                
+                <div class="math-box">
+                    <div class="math-text" id="math-text">1 + 1</div>
+                </div>
+            </div>
+
+            <div class="input-row">
+                <input type="number" id="game-input" class="game-input" placeholder="?" inputmode="numeric" autocomplete="off">
+                <div class="jam-overlay hidden" id="jam-overlay">⚠️ KẸT ĐẠN!</div>
+            </div>
+
+            <div class="skill-row">
+                <button class="skill-btn" onclick="useSkill('freeze')" style="border-color:var(--primary); color:var(--primary)">
+                    <span class="skill-icon">❄️</span> <span class="skill-cost">20⭐</span>
+                </button>
+                <button class="skill-btn" onclick="useSkill('repair')" style="border-color:var(--success); color:var(--success)">
+                    <span class="skill-icon">🔧</span> <span class="skill-cost">40⭐</span>
+                </button>
+                <button class="skill-btn" onclick="useSkill('scan')" style="border-color:var(--secondary); color:var(--secondary)">
+                    <span class="skill-icon">💡</span> <span class="skill-cost">10⭐</span>
+                </button>
+            </div>
+
+            <div style="text-align:center; height:20px; font-weight:bold; margin-bottom:10px;" id="feedback"></div>
+            <button class="btn-fire" id="btn-fire">KHAI HỎA</button>
+        </div>
+
+        <!-- OVERLAYS -->
+        <div id="win-overlay" class="overlay">
+            <div class="modal" style="border-color:var(--secondary)">
+                <h2 style="color:var(--secondary); font-family:var(--font-hud)">VICTORY!</h2>
+                <div style="font-size:3rem; margin:20px;">+<span id="win-reward">50</span> ⭐</div>
+                <button class="btn-main" onclick="nextLevel()">TIẾP TỤC</button>
+                <button class="btn-main" style="background:transparent" onclick="switchScreen('home-screen')">VỀ CĂN CỨ</button>
+            </div>
+        </div>
+
+        <div id="lose-overlay" class="overlay">
+            <div class="modal" style="border-color:var(--danger)">
+                <h2 style="color:var(--danger); font-family:var(--font-hud)">THẤT BẠI!</h2>
+                <div style="font-size:3rem; margin:20px;">💥</div>
+                <button class="btn-main" onclick="startGame(game.mode === 'endless' ? 'endless' : game.idx)">THỬ LẠI</button>
+                <button class="btn-main" style="background:transparent" onclick="switchScreen('home-screen')">RÚT LUI</button>
+            </div>
+        </div>
+
+        <!-- Pause Overlay -->
+        <div id="pause-overlay" class="overlay pause-overlay">
+            <div class="modal">
+                <h2>⏸️ TẠM DỪNG</h2>
+                <div style="margin: 20px 0; color: #8cc8ff; font-size: 1.0rem; font-weight: 500;">Game đang được tạm dừng</div>
+                <button class="btn-main" onclick="hidePauseOverlay()" style="margin-bottom: 15px;">▶️ TIẾP TỤC</button>
+                <button class="btn-main" onclick="switchScreen('home-screen')">🏠 THOÁT GAME</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== DATA & CONFIG =====
+        const LEVELS = [
+            { id: 1, title: "Alpha", target: 5, reward: 50, threatTime: 12000, config: { max: 10, ops: ['+'] } },
+            { id: 2, title: "Beta", target: 5, reward: 60, threatTime: 10000, config: { max: 20, ops: ['-'] } },
+            { id: 3, title: "Gamma", target: 7, reward: 80, threatTime: 9000, config: { max: 20, ops: ['+', '-'] }, obstacles: [{ hp: 2, reward: 20 }] },
+            { id: 4, title: "Delta", target: 5, reward: 100, threatTime: 15000, config: { max: 50, ops: ['+'], type: 'find-x' }, obstacles: [{ hp: 3, reward: 30 }] },
+            { id: 5, title: "BOSS", target: 1, reward: 300, threatTime: 8000, isBoss: true, bossHP: 8, config: { max: 30, ops: ['+', '-'] }, obstacles: [{ hp: 2, reward: 25 }, { hp: 3, reward: 35 }] },
+            { id: 6, title: "Omega", target: 10, reward: 250, threatTime: 7000, config: { max: 100, ops: ['+', '-', 'x', ':'] }, obstacles: [{ hp: 4, reward: 40 }, { hp: 2, reward: 20 }] }
+        ];
+
+        const SHOP_DB = [
+            // Weapons
+            { id: 'w_blaster', type: 'weapon', name: 'Photon Blaster', icon: '🔫', price: 0, desc: 'Laser xanh tốc độ cao. 1 DMG.', damage: 1, beam: 'beam-blaster' },
+            { id: 'w_cannon', type: 'weapon', name: 'Heavy Cannon', icon: '🔴', price: 500, desc: 'Đạn nổ. Rung chuyển màn hình. 2 DMG.', damage: 2, beam: 'beam-cannon' },
+            { id: 'w_vampire', type: 'weapon', name: 'Vampire Ray', icon: '🩸', price: 800, desc: 'Tia hút máu tím. 1 DMG + 2 HP.', damage: 1, heal: 2, beam: 'beam-vampire' },
+            { id: 'w_plasma', type: 'weapon', name: 'Plasma Rifle', icon: '🌟', price: 1200, desc: 'Tia plasma vàng. 3 DMG. Xuyên giáp.', damage: 3, beam: 'beam-plasma' },
+            { id: 'w_lightning', type: 'weapon', name: 'Lightning Gun', icon: '⚡', price: 1500, desc: 'Tia sét tím. 2 DMG + Stun 2s.', damage: 2, stun: 2000, beam: 'beam-lightning' },
+            { id: 'w_frost', type: 'weapon', name: 'Frost Cannon', icon: '❄️', price: 1800, desc: 'Tia băng xanh. 2 DMG + Freeze 3s.', damage: 2, freeze: 3000, beam: 'beam-frost' },
+            { id: 'w_nuclear', type: 'weapon', name: 'Nuclear Beam', icon: '☢️', price: 3000, desc: 'Tia hạt nhân xanh lá. 5 DMG. Cực mạnh!', damage: 5, beam: 'beam-nuclear' },
+            
+            // Items
+            { id: 'i_drone', type: 'item', name: 'Mining Drone', icon: '🤖', price: 300, desc: 'Tự động +5⭐ mỗi 5s.' },
+            { id: 'i_shield', type: 'item', name: 'Titan Shield', icon: '🛡️', price: 200, desc: 'Tăng Max HP lên 150.' },
+            { id: 'i_warp', type: 'item', name: 'Time Warp', icon: '⏳', price: 500, desc: 'Kẻ thù chậm hơn 20%.' },
+            { id: 'i_regenerator', type: 'item', name: 'Auto Heal', icon: '💚', price: 600, desc: 'Tự động +2 HP mỗi giây.' },
+            { id: 'i_scanner', type: 'item', name: 'Enemy Scanner', icon: '📡', price: 400, desc: 'Hiện HP kẻ thù và điểm yếu.' },
+            { id: 'i_multiplier', type: 'item', name: 'Star Multiplier', icon: '💎', price: 800, desc: 'Tăng 50% ⭐ nhận được.' },
+            { id: 'i_barrier', type: 'item', name: 'Energy Barrier', icon: '🔰', price: 1000, desc: 'Miễn dịch 1 lần sát thương.' },
+            { id: 'i_turbo', type: 'item', name: 'Turbo Engine', icon: '🚀', price: 700, desc: 'Giảm 30% thời gian đếm ngược.' }
+        ];
+
+        const MONSTERS = {
+            normal: `<svg viewBox="0 0 100 100" class="monster-svg"><path d="M50 15 L85 35 L95 65 L70 95 L30 90 L5 55 L15 25 Z" fill="#4a5568" stroke="#718096" stroke-width="2"/><circle cx="35" cy="45" r="5" fill="#2d3748"/><circle cx="75" cy="65" r="8" fill="#2d3748"/></svg>`,
+            boss: `<svg viewBox="0 0 120 100" class="monster-svg" style="filter:drop-shadow(0 0 20px #ff9900)"><path d="M10 40 Q60 0 110 40 L100 80 Q60 100 20 80 Z" fill="#222" stroke="#ff9900" stroke-width="3"/><circle cx="60" cy="50" r="15" fill="#ff0000"/><path d="M10 40 L110 40" stroke="#666"/></svg>`,
+            
+            // Additional monster variations
+            spider: `<svg viewBox="0 0 100 100" class="monster-svg"><ellipse cx="50" cy="50" rx="25" ry="15" fill="#2d1810" stroke="#4a2c1a" stroke-width="2"/><path d="M25 40 L10 20 M25 50 L5 45 M25 60 L10 80 M75 40 L90 20 M75 50 L95 45 M75 60 L90 80" stroke="#2d1810" stroke-width="3" fill="none"/><circle cx="40" cy="45" r="3" fill="#ff0000"/><circle cx="60" cy="45" r="3" fill="#ff0000"/></svg>`,
+            
+            dragon: `<svg viewBox="0 0 100 100" class="monster-svg"><path d="M20 60 Q30 30 50 40 Q70 30 80 60 Q75 80 50 70 Q25 80 20 60 Z" fill="#1a472a" stroke="#22c55e" stroke-width="2"/><path d="M35 30 L40 15 L45 30" fill="#22c55e"/><path d="M55 30 L60 15 L65 30" fill="#22c55e"/><circle cx="40" cy="50" r="4" fill="#fbbf24"/><circle cx="60" cy="50" r="4" fill="#fbbf24"/><path d="M80 60 Q90 65 85 75" stroke="#22c55e" stroke-width="3" fill="none"/></svg>`,
+            
+            golem: `<svg viewBox="0 0 100 100" class="monster-svg"><rect x="30" y="40" width="40" height="45" fill="#525252" stroke="#737373" stroke-width="2" rx="5"/><rect x="25" y="50" width="15" height="8" fill="#525252" stroke="#737373" stroke-width="2"/><rect x="60" y="50" width="15" height="8" fill="#525252" stroke="#737373" stroke-width="2"/><rect x="40" y="20" width="20" height="25" fill="#525252" stroke="#737373" stroke-width="2" rx="3"/><circle cx="43" cy="32" r="2" fill="#dc2626"/><circle cx="57" cy="32" r="2" fill="#dc2626"/><rect x="47" y="38" width="6" height="2" fill="#737373"/></svg>`,
+            
+            demon: `<svg viewBox="0 0 100 100" class="monster-svg"><path d="M50 20 Q30 15 25 35 Q20 55 35 70 Q50 80 65 70 Q80 55 75 35 Q70 15 50 20 Z" fill="#7f1d1d" stroke="#dc2626" stroke-width="2"/><path d="M30 25 L25 15 L35 20" fill="#dc2626"/><path d="M70 25 L75 15 L65 20" fill="#dc2626"/><circle cx="40" cy="40" r="3" fill="#fbbf24"/><circle cx="60" cy="40" r="3" fill="#fbbf24"/><path d="M45 55 Q50 60 55 55" stroke="#dc2626" stroke-width="2" fill="none"/><path d="M48 58 L50 62 L52 58" fill="#fff"/></svg>`,
+            
+            beast: `<svg viewBox="0 0 100 100" class="monster-svg"><ellipse cx="50" cy="55" rx="30" ry="20" fill="#451a03" stroke="#78350f" stroke-width="2"/><ellipse cx="50" cy="35" rx="20" ry="15" fill="#451a03" stroke="#78350f" stroke-width="2"/><path d="M35 25 L30 15 L40 20" fill="#78350f"/><path d="M65 25 L70 15 L60 20" fill="#78350f"/><circle cx="42" cy="32" r="2" fill="#ef4444"/><circle cx="58" cy="32" r="2" fill="#ef4444"/><path d="M45 40 L50 45 L55 40" stroke="#78350f" stroke-width="2" fill="none"/><path d="M20 50 Q15 45 20 40" stroke="#78350f" stroke-width="3" fill="none"/><path d="M80 50 Q85 45 80 40" stroke="#78350f" stroke-width="3" fill="none"/></svg>`,
+            
+            // 7 New Monster Types
+            ghost: `<svg viewBox="0 0 100 100" class="monster-svg"><path d="M50 20 Q25 15 20 45 Q15 75 25 85 L30 80 L35 85 L40 75 L45 80 L50 70 L55 80 L60 75 L65 85 L70 80 L75 85 Q85 75 80 45 Q75 15 50 20 Z" fill="#e0e7ff" stroke="#a5b4fc" stroke-width="2" opacity="0.8"/><circle cx="38" cy="40" r="4" fill="#1e1b4b"/><circle cx="62" cy="40" r="4" fill="#1e1b4b"/><ellipse cx="50" cy="52" rx="8" ry="4" fill="#1e1b4b" opacity="0.6"/></svg>`,
+            
+            robot: `<svg viewBox="0 0 100 100" class="monster-svg"><rect x="35" y="45" width="30" height="35" fill="#374151" stroke="#6b7280" stroke-width="2" rx="3"/><rect x="30" y="55" width="10" height="6" fill="#374151" stroke="#6b7280" stroke-width="1"/><rect x="60" y="55" width="10" height="6" fill="#374151" stroke="#6b7280" stroke-width="1"/><rect x="40" y="25" width="20" height="25" fill="#374151" stroke="#6b7280" stroke-width="2" rx="2"/><rect x="42" y="30" width="4" height="4" fill="#ef4444"/><rect x="54" y="30" width="4" height="4" fill="#ef4444"/><rect x="46" y="38" width="8" height="2" fill="#6b7280"/><circle cx="45" cy="15" r="3" fill="#fbbf24"/><circle cx="55" cy="15" r="3" fill="#fbbf24"/><path d="M45 18 L45 22 M55 18 L55 22" stroke="#fbbf24" stroke-width="2"/></svg>`,
+            
+            crystal: `<svg viewBox="0 0 100 100" class="monster-svg"><path d="M50 10 L75 35 L65 70 L50 85 L35 70 L25 35 Z" fill="#7c3aed" stroke="#a855f7" stroke-width="2" opacity="0.9"/><path d="M50 10 L60 30 L50 50 L40 30 Z" fill="#a855f7" opacity="0.7"/><path d="M50 50 L65 70 L50 85 L35 70 Z" fill="#5b21b6" opacity="0.8"/><circle cx="45" cy="35" r="2" fill="#fbbf24" opacity="0.9"/><circle cx="55" cy="40" r="2" fill="#fbbf24" opacity="0.9"/><circle cx="50" cy="65" r="3" fill="#fbbf24" opacity="0.9"/><path d="M35 40 L50 25 L65 40 L50 55 Z" stroke="#ddd6fe" stroke-width="1" fill="none" opacity="0.6"/></svg>`,
+            
+            plant: `<svg viewBox="0 0 100 100" class="monster-svg"><ellipse cx="50" cy="75" rx="20" ry="12" fill="#365314" stroke="#4d7c0f" stroke-width="2"/><path d="M30 75 Q20 60 25 45 Q30 30 40 35" stroke="#4d7c0f" stroke-width="3" fill="none"/><path d="M70 75 Q80 60 75 45 Q70 30 60 35" stroke="#4d7c0f" stroke-width="3" fill="none"/><path d="M50 75 Q45 50 50 30 Q55 20 60 25" stroke="#4d7c0f" stroke-width="4" fill="none"/><circle cx="25" cy="45" r="8" fill="#65a30d" stroke="#4d7c0f" stroke-width="2"/><circle cx="75" cy="45" r="8" fill="#65a30d" stroke="#4d7c0f" stroke-width="2"/><circle cx="60" cy="25" r="10" fill="#65a30d" stroke="#4d7c0f" stroke-width="2"/><circle cx="23" cy="43" r="2" fill="#dc2626"/><circle cx="77" cy="43" r="2" fill="#dc2626"/><circle cx="58" cy="23" r="3" fill="#dc2626"/><path d="M55 28 Q60 32 65 28" stroke="#dc2626" stroke-width="2" fill="none"/></svg>`,
+            
+            eye: `<svg viewBox="0 0 100 100" class="monster-svg"><ellipse cx="50" cy="50" rx="35" ry="25" fill="#1e1b4b" stroke="#312e81" stroke-width="3"/><ellipse cx="50" cy="50" rx="28" ry="20" fill="#3730a3"/><circle cx="50" cy="50" r="15" fill="#1e40af"/><circle cx="50" cy="50" r="8" fill="#000"/><circle cx="52" cy="47" r="2" fill="#fff"/><path d="M15 45 Q10 35 15 25 Q20 15 25 20" stroke="#dc2626" stroke-width="2" fill="none"/><path d="M85 45 Q90 35 85 25 Q80 15 75 20" stroke="#dc2626" stroke-width="2" fill="none"/><path d="M45 15 Q35 10 25 15" stroke="#dc2626" stroke-width="2" fill="none"/><path d="M55 15 Q65 10 75 15" stroke="#dc2626" stroke-width="2" fill="none"/><path d="M35 75 Q25 80 15 75" stroke="#dc2626" stroke-width="2" fill="none"/><path d="M65 75 Q75 80 85 75" stroke="#dc2626" stroke-width="2" fill="none"/><circle cx="25" cy="20" r="3" fill="#dc2626"/><circle cx="75" cy="20" r="3" fill="#dc2626"/></svg>`,
+            
+            slime: `<svg viewBox="0 0 100 100" class="monster-svg"><ellipse cx="50" cy="70" rx="35" ry="20" fill="#059669" stroke="#047857" stroke-width="2" opacity="0.8"/><ellipse cx="50" cy="55" rx="25" ry="18" fill="#10b981" stroke="#047857" stroke-width="2" opacity="0.7"/><ellipse cx="50" cy="40" rx="18" ry="15" fill="#34d399" stroke="#047857" stroke-width="2" opacity="0.6"/><circle cx="42" cy="38" r="4" fill="#000" opacity="0.8"/><circle cx="58" cy="38" r="4" fill="#000" opacity="0.8"/><circle cx="44" cy="36" r="1" fill="#fff"/><circle cx="60" cy="36" r="1" fill="#fff"/><ellipse cx="50" cy="45" rx="6" ry="2" fill="#000" opacity="0.6"/><circle cx="35" cy="60" r="3" fill="#6ee7b7" opacity="0.7"/><circle cx="65" cy="65" r="2" fill="#6ee7b7" opacity="0.7"/><circle cx="45" cy="25" r="2" fill="#6ee7b7" opacity="0.7"/></svg>`,
+            
+            skull: `<svg viewBox="0 0 100 100" class="monster-svg"><ellipse cx="50" cy="45" rx="25" ry="20" fill="#f3f4f6" stroke="#d1d5db" stroke-width="2"/><ellipse cx="50" cy="30" rx="20" ry="18" fill="#f3f4f6" stroke="#d1d5db" stroke-width="2"/><circle cx="40" cy="28" r="6" fill="#000"/><circle cx="60" cy="28" r="6" fill="#000"/><path d="M50 35 L47 42 L50 48 L53 42 Z" fill="#000"/><path d="M42 55 L44 60 L46 55" fill="#000"/><path d="M50 55 L52 60 L54 55" fill="#000"/><path d="M58 55 L60 60 L62 55" fill="#000"/><path d="M35 60 Q30 70 35 75" stroke="#d1d5db" stroke-width="2" fill="none"/><path d="M65 60 Q70 70 65 75" stroke="#d1d5db" stroke-width="2" fill="none"/><circle cx="45" cy="18" r="2" fill="#ef4444"/><circle cx="55" cy="18" r="2" fill="#ef4444"/></svg>`
+        };
+
+        const WORD_DATA = { names: ["Minh", "Lan", "Hùng", "Mai"], items: ["táo", "kẹo", "bi", "hoa"] };
+
+        // ===== GAME STATE =====
+        let player = { starDust: 100, level: 1, maxHP: 100, inventory: ['w_blaster'], equippedWeapon: 'w_blaster', gm: false };
+        let game = { idx: 0, hp: 100, progress: 0, problem: null, timer: null, threat: 0, enemy: 'normal', heat: 0, jammed: false, mode: 'campaign', score: 0, obstacle: null, gmTimeMultiplier: 1.0 };
+        
+        let mathConfig = {
+            ops: ['+'],
+            magnitude: ['units'], 
+            diff: ['no-carry'],
+            type: ['normal']
+        };
+
+        let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // ===== INIT =====
+        window.onload = () => {
+            if(localStorage.getItem('av15')) player = JSON.parse(localStorage.getItem('av15'));
+            if(localStorage.getItem('av15_cfg')) mathConfig = JSON.parse(localStorage.getItem('av15_cfg'));
+            if(player.inventory.includes('i_shield')) player.maxHP = 150;
+            
+            updateHome(); initStarfield();
+            setInterval(() => { if(player.inventory.includes('i_drone')) { player.starDust += 5; updateHome(); saveData(); } }, 5000);
+        };
+
+        function saveData() { 
+            localStorage.setItem('av15', JSON.stringify(player));
+            localStorage.setItem('av15_cfg', JSON.stringify(mathConfig));
+        }
+        function switchScreen(id) { 
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); 
+            // Hide all overlays
+            document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('active')); 
+            // Clear any running timers when switching screens
+            if (game && game.timer) {
+                clearInterval(game.timer);
+                game.paused = false;
+            }
+            // Show target screen
+            document.getElementById(id).classList.add('active'); 
+        }
+
+        // ===== SETTINGS & GM =====
+        // Enhanced Math Configuration System
+        function toggleMathConfig(category, value, button) {
+            const list = mathConfig[category];
+            const idx = list.indexOf(value);
+            
+            if (idx > -1) {
+                if (list.length > 1) {
+                    list.splice(idx, 1);
+                    button.classList.remove('active');
+                }
+            } else {
+                list.push(value);
+                button.classList.add('active');
+            }
+            
+            updateMathConfigUI();
+            if (typeof playButtonClick === 'function') playButtonClick();
+            saveData();
+        }
+        
+        function updateMathConfigUI() {
+            document.querySelectorAll('.math-toggle').forEach(btn => {
+                const category = btn.dataset.category;
+                const value = btn.dataset.value;
+                
+                if (mathConfig[category] && mathConfig[category].includes(value)) {
+                    btn.classList.add('active');
+                    btn.style.background = 'linear-gradient(135deg, rgba(0, 242, 255, 0.3), rgba(0, 150, 255, 0.2))';
+                    btn.style.borderColor = 'var(--primary)';
+                    btn.style.color = 'var(--primary)';
+                    btn.style.boxShadow = '0 0 10px rgba(0, 242, 255, 0.3)';
+                } else {
+                    btn.classList.remove('active');
+                    btn.style.background = 'rgba(0, 0, 0, 0.3)';
+                    btn.style.borderColor = '#666';
+                    btn.style.color = '#fff';
+                    btn.style.boxShadow = 'none';
+                }
+            });
+        }
+
+        // Old toggleGM function removed - using new TLBB-style GM system
+
+        // ===== MATH ENGINE =====
+        function r(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+        
+        function generateMath(isCustom) {
+            let cfg = { ops:['+'], diff:['no-carry'], type:['normal'], magnitude:['units'] };
+
+            if(!isCustom) {
+                // Campaign Logic (Fixed Difficulty)
+                const lv = LEVELS[game.idx];
+                cfg.ops = lv.config.ops;
+                cfg.magnitude = game.idx > 1 ? ['units', 'tens'] : ['units'];
+                if(game.idx > 3) cfg.type = ['find-x'];
+            } else {
+                // Custom Logic (Settings applied)
+                cfg = mathConfig;
+            }
+
+            const op = cfg.ops[r(0, cfg.ops.length-1)];
+            const mag = cfg.magnitude[r(0, cfg.magnitude.length-1)];
+            const type = cfg.type[r(0, cfg.type.length-1)];
+
+            let min=1, max=9;
+            if(mag==='tens') { min=10; max=99; }
+            if(mag==='hundreds') { min=100; max=999; }
+            if(mag==='thousands') { min=1000; max=9999; }
+            
+            if(op==='x' || op===':') {
+                if(mag==='units') { min=1; max=9; }
+                else { min=2; max=12; }
+            }
+
+            let a, b, ans, txt;
+            if(op === '+') { a=r(min, max); b=r(min, max); ans=a+b; }
+            else if(op === '-') { a=r(min, max); b=r(min, a); ans=a-b; }
+            else if(op === 'x') { a=r(min, max); b=r(1, 9); ans=a*b; }
+            else if(op === ':') { b=r(2, 9); ans=r(min, max); a=b*ans; }
+
+            const sym = op==='x'?'×':op;
+            if (type === 'word') {
+                const n1 = WORD_DATA.names[r(0, WORD_DATA.names.length-1)];
+                const it = WORD_DATA.items[r(0, WORD_DATA.items.length-1)];
+                if (op==='+') txt = `${n1} có ${a} ${it}, mua thêm ${b}. Tổng?`;
+                else if (op==='-') txt = `${n1} có ${a} ${it}, cho ${b}. Còn lại?`;
+                else if (op==='x') txt = `Mỗi túi ${a} ${it}. ${b} túi có?`;
+                else txt = `Chia ${a} ${it} cho ${b} bạn. Mỗi bạn?`;
+            } else if (type === 'find-x') {
+                if (op === '+') { txt = `X + ${b} = ${ans}`; game.problem = {ans:a}; }
+                else if (op === '-') { txt = `X - ${b} = ${ans}`; game.problem = {ans:a}; }
+                else if (op === 'x') { txt = `X × ${b} = ${ans}`; game.problem = {ans:a}; }
+                else { txt = `${a} : X = ${ans}`; game.problem = {ans:b}; }
+                return { ans: game.problem.ans, text: txt, isWord: false };
+            } else {
+                txt = `${a} ${sym} ${b}`;
+            }
+
+            return { ans, text: txt, isWord: type==='word' };
+        }
+
+        // ===== GAME LOOP =====
+        function startGame(modeOrIdx) {
+            if (typeof playWindowOpen === 'function') playWindowOpen();
+            if (typeof startBackgroundMusic === 'function') startBackgroundMusic();
+            // Hide all overlays first
+            document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('active'));
+            game = { hp: player.maxHP, progress: 0, combo: 0, threat: 0, heat: 0, jammed: false, enemy: 'normal', score: 0 };
+            if(modeOrIdx === 'endless') { game.mode = 'endless'; game.idx = 0; }
+            else if (modeOrIdx === 'zen') { game.mode = 'zen'; game.idx = 0; }
+            else { game.mode = 'campaign'; game.idx = modeOrIdx; }
+            switchScreen('game-screen'); updateHUD(); nextProblem();
+        }
+
+        function nextProblem() {
+            // Check if there's an active obstacle first
+            if (game.obstacle && game.obstacle.hp > 0) {
+                // Continue with obstacle, don't generate new problem yet
+                const inp = document.getElementById('game-input'); 
+                inp.value = ''; inp.disabled = false; inp.focus();
+                if(game.mode !== 'zen') startThreat();
+                return;
+            }
+            
+            if(game.mode === 'campaign') {
+                const limit = LEVELS[game.idx].isBoss ? LEVELS[game.idx].bossHP : LEVELS[game.idx].target;
+                if(game.progress >= limit) return showWin();
+            }
+            if(game.mode === 'endless' && game.progress>0 && game.progress%10===0) game.hp = Math.min(game.hp+20, player.maxHP);
+
+            const inp = document.getElementById('game-input'); 
+            inp.value = ''; inp.disabled = false; inp.focus();
+            
+            // Spawn obstacle randomly
+            if (game.mode === 'campaign' && LEVELS[game.idx].obstacles && Math.random() < 0.3) {
+                const obstacles = LEVELS[game.idx].obstacles;
+                const obstacle = obstacles[Math.floor(Math.random() * obstacles.length)];
+                spawnObstacle(obstacle);
+            }
+            
+            if(game.mode === 'campaign') game.enemy = LEVELS[game.idx].isBoss ? 'boss' : 'normal';
+            else { const r = Math.random(); game.enemy = r<0.1?'boss':(r<0.2?'gold':'normal'); }
+            
+            // Choose monster shape (random for normal enemies, boss stays boss)
+            let monsterShape;
+            if (game.enemy === 'boss') {
+                monsterShape = 'boss';
+            } else {
+                // Random selection from all non-boss monsters (13 types total)
+                const normalShapes = ['normal', 'spider', 'dragon', 'golem', 'demon', 'beast', 'ghost', 'robot', 'crystal', 'plant', 'eye', 'slime', 'skull'];
+                monsterShape = normalShapes[Math.floor(Math.random() * normalShapes.length)];
+            }
+            
+            document.getElementById('monster-area').innerHTML = MONSTERS[monsterShape];
+
+            const applySettings = (game.mode === 'endless' || game.mode === 'zen');
+            const p = generateMath(applySettings);
+            
+            game.problem = {ans: p.ans};
+            const tb = document.getElementById('math-text');
+            tb.textContent = p.text;
+            tb.className = p.isWord ? 'math-text word-problem' : 'math-text';
+
+            if(game.mode !== 'zen') startThreat();
+        }
+
+        function startThreat() {
+            clearInterval(game.timer);
+            let time = 12000;
+            if(game.mode==='campaign') time = LEVELS[game.idx].threatTime;
+            if(game.mode==='endless') time = Math.max(4000, 10000 - (game.progress*100));
+            if(player.inventory.includes('i_warp')) time*=1.2;
+            
+            // Apply GM time multiplier (FIXED: divide instead of multiply)
+            // x2 = fast (time/2), x0.5 = slow (time/0.5 = time*2)
+            if(game.gmTimeMultiplier) time /= game.gmTimeMultiplier;
+            
+            const tick=50, inc=100/(time/tick); game.threat=0;
+            game.timer=setInterval(()=>{
+                if(!game.jammed && !game.frozen) { game.threat+=inc; document.getElementById('threat-bar').style.width=game.threat+"%"; if(game.threat>=100) takeDamage(); }
+                if(game.heat>0 && !game.jammed) { game.heat-=0.2; if(game.heat<0) game.heat=0; updateHeat(); }
+            }, tick);
+        }
+
+        function submitAnswer() {
+            playButtonClick(); // Sound when clicking Khai Hoả
+            if(game.jammed) return;
+            const val = parseInt(document.getElementById('game-input').value);
+            if(isNaN(val)) return;
+            const w = SHOP_DB.find(x => x.id === player.equippedWeapon);
+
+            if(val === game.problem.ans) {
+                playCorrectSound(); // Success sound combo
+                const l = document.getElementById('laser'); 
+                l.className = `laser ${w.beam} shoot`;
+                l.style.display = 'block';
+                setTimeout(()=>{
+                    l.className='laser';
+                    l.style.display = 'none';
+                }, 300);
+                
+                if(w.id==='w_cannon') { document.querySelector('.viewport').classList.add('hit-effect'); setTimeout(()=>document.querySelector('.viewport').classList.remove('hit-effect'), 300); }
+                
+                showFloatText("CHÍNH XÁC!", "#00ff9d");
+                game.combo++; if(game.mode==='endless') game.score+=10*(1+(game.combo*0.1));
+                
+                // Handle obstacle first if exists
+                if (game.obstacle && game.obstacle.hp > 0) {
+                    game.obstacle.hp -= w.damage;
+                    document.querySelector('.obstacle').classList.add('hit');
+                    setTimeout(() => {
+                        const obs = document.querySelector('.obstacle');
+                        if (obs) obs.classList.remove('hit');
+                    }, 300);
+                    
+                    if (game.obstacle.hp <= 0) {
+                        // Obstacle destroyed
+                        player.starDust += game.obstacle.reward;
+                        showFloatText(`+${game.obstacle.reward} ⭐`, "#ffd700");
+                        document.getElementById('obstacle-area').innerHTML = '';
+                        game.obstacle = null;
+                    } else {
+                        // Update obstacle HP display
+                        const hpDisplay = document.querySelector('.obstacle-hp');
+                        if (hpDisplay) hpDisplay.textContent = `HP: ${game.obstacle.hp}`;
+                    }
+                } else {
+                    // Normal enemy damage
+                    if(!game.isZen) game.progress += w.damage;
+                    
+                    // Simple monster hit effect
+                    const monster = document.querySelector('.monster-svg');
+                    if (monster) {
+                        monster.classList.add('hit');
+                        setTimeout(() => {
+                            if (monster) {
+                                monster.classList.remove('hit');
+                            }
+                        }, 400);
+                    }
+                }
+                
+                if(w.heal) game.hp = Math.min(game.hp+w.heal, player.maxHP);
+                
+                // Apply special weapon effects
+                if(w.stun || w.freeze) {
+                    setTimeout(() => {
+                        clearInterval(game.timer);
+                        if (game.mode !== 'zen' && !game.paused && !game.frozen) {
+                            startThreat();
+                        }
+                    }, w.stun || w.freeze);
+                }
+                
+                clearInterval(game.timer);
+                setTimeout(nextProblem, 300);
+            } else {
+                playWrongSound(); // Wrong answer sound
+                showFloatText("SAI RỒI!", "#ff0055");
+                game.combo=0; game.heat+=50; updateHeat();
+                if(game.heat>=100) jamGun(); else { document.getElementById('game-input').value=''; document.getElementById('game-input').focus(); }
+            }
+            updateHUD();
+        }
+
+        function jamGun() {
+            game.jammed=true; document.getElementById('jam-overlay').classList.remove('hidden'); document.getElementById('btn-fire').classList.add('jammed'); document.getElementById('game-input').disabled=true;
+            setTimeout(()=>{ game.jammed=false; game.heat=0; updateHeat(); document.getElementById('jam-overlay').classList.add('hidden'); document.getElementById('btn-fire').classList.remove('jammed'); document.getElementById('game-input').disabled=false; document.getElementById('game-input').focus(); }, 3000);
+        }
+
+        function takeDamage(amt=15) {
+            clearInterval(game.timer); game.threat=0; document.getElementById('threat-bar').style.width='0%';
+            game.hp-=amt; document.body.style.backgroundColor='#500'; setTimeout(()=>document.body.style.backgroundColor='var(--bg-deep)', 100);
+            updateHUD(); if(game.hp<=0) showLose(); else nextProblem();
+        }
+
+        // ===== SHOP =====
+        function openShop() { switchScreen('shop-screen'); filterShop('weapon', document.querySelector('.tab-btn')); }
+        function filterShop(type, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); if(btn) btn.classList.add('active');
+            const grid = document.getElementById('shop-grid'); grid.innerHTML = '';
+            SHOP_DB.filter(i => i.type === type).forEach(item => {
+                const owned = player.inventory.includes(item.id); const equipped = player.equippedWeapon === item.id;
+                let btnHtml = item.type==='weapon' ? (equipped ? `<button class="item-btn" disabled>ĐANG DÙNG</button>` : (owned ? `<button class="item-btn equip" onclick="equipWeapon('${item.id}')">TRANG BỊ</button>` : `<button class="item-btn" onclick="buyItem('${item.id}')">${item.price} ⭐</button>`)) : `<button class="item-btn" onclick="buyItem('${item.id}')" ${owned?'disabled':''}>${owned?'ĐÃ CÓ':item.price+' ⭐'}</button>`;
+                grid.innerHTML += `<div class="card-item ${equipped?'equipped':''}"><div class="item-icon">${item.icon}</div><div class="item-name">${item.name}</div><div class="item-desc">${item.desc}</div>${btnHtml}</div>`;
+            });
+        }
+        function buyItem(id) { const i=SHOP_DB.find(x=>x.id===id); if(player.starDust>=i.price){ player.starDust-=i.price; player.inventory.push(id); if(id==='i_shield') player.maxHP=150; saveData(); filterShop(i.type, null); } else alert("Không đủ ⭐!"); }
+        function equipWeapon(id) { player.equippedWeapon=id; saveData(); filterShop('weapon', null); }
+
+        // ===== GM FUNCTIONS =====
+        function gm_money() { player.starDust += 1000; updateHome(); saveData(); showFloatText("GM: RICH!", "#0f0"); }
+        function gm_unlock() { player.level = 6; updateHome(); saveData(); showFloatText("GM: UNLOCKED", "#0f0"); }
+        function gm_kill() { if(document.getElementById('game-screen').classList.contains('active')) { const w = SHOP_DB.find(x => x.id === player.equippedWeapon); if(!game.isZen) game.progress+=10; clearInterval(game.timer); nextProblem(); updateHUD(); showFloatText("GM: KILL", "#f00"); } }
+        function gm_skip() { if(document.getElementById('game-screen').classList.contains('active')) { clearInterval(game.timer); nextProblem(); showFloatText("GM: SKIP", "#ff0"); } }
+        
+        // GM Panel Control
+        function closeGMPanel() {
+            const gmPanel = document.getElementById('gm-panel');
+            if (gmPanel) {
+                gmPanel.classList.remove('active');
+            }
+            showFloatText('GM Panel Đóng', '#ff0');
+        }
+        
+        function gm_godMode() {
+            // Enhanced god mode with visual effects
+            player.starDust += 10000;
+            player.maxHP = 9999;
+            if (game) {
+                game.hp = player.maxHP;
+                game.heat = 0;
+                game.jammed = false;
+            }
+            player.level = 99;
+            
+            // Buy all items
+            SHOP_DB.forEach(item => {
+                if (!player.inventory.includes(item.id)) {
+                    player.inventory.push(item.id);
+                }
+            });
+            
+            // Apply shield upgrade
+            if (player.inventory.includes('i_shield')) {
+                player.maxHP = Math.max(player.maxHP, 9999);
+            }
+            
+            updateHome();
+            updateHUD();
+            saveData();
+            
+            // Multiple visual feedback
+            showFloatText('⚡ GOD MODE ACTIVATED ⚡', '#ffd700');
+            setTimeout(() => showFloatText('💰 +10,000 STARS! 💰', '#00ff00'), 500);
+            setTimeout(() => showFloatText('🔓 ALL UNLOCKED! 🔓', '#00ffff'), 1000);
+            
+            // Screen flash effect
+            document.body.style.background = 'linear-gradient(45deg, #ffd700, #ffff00)';
+            setTimeout(() => {
+                document.body.style.background = 'var(--bg-deep)';
+            }, 200);
+        }
+        
+        function gm_resetGame() {
+            if (confirm('⚠️ RESET TOÀN BỘ GAME DATA?\n\nHành động này không thể hoàn tác!')) {
+                if (confirm('🚨 XÁC NHẬN LẦN CUỐI!\n\nTất cả progress sẽ bị xóa!')) {
+                    showFloatText('💥 RESETTING GAME...', '#ff0000');
+                    setTimeout(() => {
+                        localStorage.removeItem('av15');
+                        localStorage.removeItem('av15_cfg');
+                        location.reload();
+                    }, 1000);
+                }
+            }
+        }
+        
+        // GM Time Control
+        function adjustGameTime(multiplier) {
+            game.gmTimeMultiplier = multiplier;
+            // Update display
+            const display = document.getElementById('gm-time-display');
+            if (display) display.textContent = multiplier.toFixed(1);
+            
+            // Update input field
+            const input = document.getElementById('custom-time');
+            if (input) input.value = multiplier.toFixed(1);
+            
+            showFloatText(`Time Speed: x${multiplier}`, "#0ff");
+            
+            // Restart threat timer with new multiplier if game is active
+            if (document.getElementById('game-screen').classList.contains('active') && game.mode !== 'zen') {
+                startThreat();
+            }
+        }
+        
+        function applyCustomTime() {
+            const input = document.getElementById('custom-time');
+            if (input) {
+                let value = parseFloat(input.value);
+                if (isNaN(value) || value < 0.1) value = 0.1;
+                if (value > 10) value = 10;
+                
+                input.value = value.toFixed(1);
+                adjustGameTime(value);
+            }
+        }
+
+        // ===== HELPERS =====
+        function updateHUD() {
+            document.getElementById('hud-hp-text').textContent = Math.ceil(game.hp); document.getElementById('hud-hp-bar').style.width = (game.hp/player.maxHP*100)+'%';
+            if(game.mode==='endless') { document.getElementById('hud-level').textContent="SINH TỒN"; document.getElementById('hud-progress').textContent="Score: "+game.score; }
+            else { document.getElementById('hud-level').textContent="LV."+(game.idx+1); document.getElementById('hud-progress').textContent=game.mode==='zen'?"∞":`${game.progress}/${LEVELS[game.idx].isBoss?LEVELS[game.idx].bossHP:LEVELS[game.idx].target}`; }
+        }
+        function updateHeat() { document.getElementById('heat-bar').style.width=game.heat+"%"; document.getElementById('heat-ui').className=game.heat>0?"heat-container active":"heat-container"; }
+        function showWin() { 
+            // Disable input and hide game elements
+            const input = document.getElementById('game-input');
+            const fireBtn = document.getElementById('btn-fire');
+            input.disabled = true;
+            input.style.display = 'none';
+            fireBtn.style.display = 'none';
+            
+            let r=LEVELS[game.idx].reward; 
+            player.starDust+=r; 
+            if(game.idx+2>player.level) player.level=game.idx+2; 
+            saveData(); 
+            document.getElementById('win-reward').textContent=r; 
+            document.getElementById('win-overlay').classList.add('active'); 
+        }
+        function showLose() { document.getElementById('lose-overlay').classList.add('active'); }
+        
+        // Pause overlay functions
+        function showPauseOverlay() {
+            if (typeof playButtonClick === 'function') playButtonClick();
+            document.getElementById('pause-overlay').classList.add('active');
+            // Pause the game timer
+            if (game.timer) {
+                clearInterval(game.timer);
+                game.paused = true;
+            }
+        }
+        
+        function hidePauseOverlay() {
+            if (typeof playButtonClick === 'function') playButtonClick();
+            document.getElementById('pause-overlay').classList.remove('active');
+            // Resume the game timer if it was paused
+            if (game.paused && game.mode !== 'zen') {
+                startThreat();
+                game.paused = false;
+            }
+        }
+        function nextLevel() { 
+            document.getElementById('win-overlay').classList.remove('active'); 
+            // Restore input visibility
+            const input = document.getElementById('game-input');
+            const fireBtn = document.getElementById('btn-fire');
+            input.disabled = false;
+            input.style.display = 'block';
+            fireBtn.style.display = 'block';
+            
+            if(game.idx<LEVELS.length-1) startGame(game.idx+1); else switchScreen('home-screen'); 
+        }
+        function updateHome() {
+            document.getElementById('home-stardust').textContent=player.starDust;
+            let r="Tân Binh"; if(player.level>2) r="Phi Công"; if(player.level>4) r="Đội Trưởng"; document.getElementById('home-rank').textContent=r;
+            const g=document.getElementById('level-grid'); g.innerHTML='';
+            LEVELS.forEach((lv,i)=>{ const l=i+1>player.level; g.innerHTML+=`<div class="btn-main" style="text-align:center; opacity:${l?0.5:1}; cursor:${l?'not-allowed':'pointer'}" onclick="${l?'':'startGame('+i+')'}"><div style="font-size:1.5rem">${lv.isBoss?'💀':'🪐'}</div><div style="font-size:0.8rem; font-weight:bold">${lv.title}</div></div>`; });
+        }
+        // Enhanced Floating Text Notification System
+        function showSkillNotification(msg, color = '#ff0055', icon = '⚠️') {
+            const notification = document.createElement('div');
+            notification.innerHTML = `${icon} ${msg}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) scale(0.8);
+                background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(0, 20, 40, 0.8));
+                border: 2px solid ${color};
+                border-radius: 15px;
+                padding: 20px 30px;
+                color: ${color};
+                font-family: var(--font-hud);
+                font-size: 18px;
+                font-weight: bold;
+                text-shadow: 0 0 10px ${color};
+                box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), 0 0 20px ${color}40;
+                z-index: 10001;
+                opacity: 0;
+                pointer-events: none;
+                backdrop-filter: blur(10px);
+                max-width: 300px;
+                text-align: center;
+                white-space: pre-line;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animation in
+            setTimeout(() => {
+                notification.style.transform = 'translate(-50%, -50%) scale(1)';
+                notification.style.opacity = '1';
+                notification.style.transition = 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            }, 10);
+            
+            // Animation out
+            setTimeout(() => {
+                notification.style.transform = 'translate(-50%, -50%) scale(0.8)';
+                notification.style.opacity = '0';
+                notification.style.transition = 'all 0.3s ease-in';
+                
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 500);
+            
+            // Play notification sound
+            if (typeof playWrongSound === 'function') {
+                playWrongSound();
+            }
+        }
+        
+        function showFloatText(txt, col) { const el=document.createElement('div'); el.className='float-text'; el.textContent=txt; el.style.color=col; el.style.left='50%'; el.style.top='40%'; document.body.appendChild(el); setTimeout(()=>el.remove(), 800); }
+        function initStarfield() { const c=document.getElementById('bg-canvas'), x=c.getContext('2d'); c.width=window.innerWidth; c.height=window.innerHeight; let s=[]; for(let i=0;i<100;i++)s.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*2}); function l(){x.fillStyle='#020408';x.fillRect(0,0,c.width,c.height);x.fillStyle='#fff';s.forEach(p=>{p.y+=p.r;if(p.y>c.height)p.y=0;x.fillRect(p.x,p.y,p.r,p.r)});requestAnimationFrame(l)} l(); }
+
+        document.getElementById('game-input').addEventListener('keypress', (e)=>{if(e.key==='Enter') submitAnswer()});
+        document.getElementById('btn-fire').onclick = submitAnswer;
+        
+        // GM Panel Toggle with ~ key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '`' || e.key === '~') {
+                if (player.gm) {
+                    toggleGMPanel();
+                }
+            }
+        });
+        
+        // Toggle GM Panel function
+        function toggleGMPanel() {
+            const gmPanel = document.getElementById('gm-panel');
+            if (gmPanel) {
+                if (gmPanel.classList.contains('active')) {
+                    gmPanel.classList.remove('active');
+                    showFloatText('GM Panel Ẩn', '#ff0');
+                } else {
+                    gmPanel.classList.add('active');
+                    showFloatText('GM Panel Hiện', '#0f0');
+                }
+            }
+        }
+        window.useSkill = (type) => {
+            playButtonClick(); // Sound effect for skill use
+            const costs = {freeze: 20, repair: 40, scan: 10};
+            const cost = costs[type];
+            
+            if (player.starDust < cost) {
+                const skillNames = { 
+                    freeze: '❄️ Đông Lạnh Thời Gian', 
+                    repair: '🔧 Sửa Chữa Máy', 
+                    scan: '🔍 Phân Tích Mục Tiêu' 
+                };
+                const needed = cost - player.starDust;
+                showSkillNotification(
+                    `Không đủ Star Dust!\nCần thêm ${needed} ⭐ để sử dụng\n${skillNames[type]}`, 
+                    '#ff3333', 
+                    '💸'
+                );
+                return;
+            }
+            
+            player.starDust -= cost;
+            saveData();
+            
+            if (type === 'repair') {
+                const healed = Math.min(30, player.maxHP - game.hp);
+                game.hp = Math.min(game.hp + 30, player.maxHP);
+                updateHUD();
+                if (typeof playSound === 'function') playSound('magic_restore');
+                showSkillNotification(`🔧 Sửa Chữa Thành Công!\n+${healed} HP`, '#00ff00', '✅');
+            }
+            
+            if (type === 'scan') {
+                document.getElementById('game-input').value = game.problem.ans;
+                if (typeof playSound === 'function') playSound('skill-sound');
+                showSkillNotification('🔍 Phân Tích Thành Công!\nĐã hiện thị đáp án', '#00ff00', '✅');
+            }
+            
+            if (type === 'freeze') {
+                // Freeze time by pausing the threat timer for 5 seconds
+                if (game.timer) {
+                    clearInterval(game.timer);
+                    game.frozen = true;
+                    
+                    setTimeout(() => {
+                        game.frozen = false;
+                        if (game.mode !== 'zen' && !game.paused) {
+                            startThreat();
+                        }
+                    }, 5000); // Freeze for 5 seconds
+                }
+                
+                if (typeof playSound === 'function') playSound('skill-sound');
+                showSkillNotification('❄️ Đông Lạnh Kích Hoạt!\nThời gian tạm dừng 5 giây', '#00ffff', '⏰');
+            }
+        }
+        
+        
+        // Settings Functions with Enhanced UX
+        function openSettings() {
+            if (typeof playWindowOpen === 'function') playWindowOpen();
+            const modal = document.getElementById('settings-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                
+                // Prevent background scrolling
+                document.body.style.overflow = 'hidden';
+                
+                // Smooth scroll animation
+                const modalContent = modal.querySelector('div');
+                if (modalContent) {
+                    modalContent.style.transform = 'scale(0.9) translateY(-20px)';
+                    modalContent.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        modalContent.style.transform = 'scale(1) translateY(0)';
+                        modalContent.style.opacity = '1';
+                        modalContent.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    }, 10);
+                }
+            }
+        }
+        
+        function closeSettings() {
+            if (typeof playWindowClose === 'function') playWindowClose();
+            const modal = document.getElementById('settings-modal');
+            if (modal) {
+                const modalContent = modal.querySelector('div');
+                if (modalContent) {
+                    modalContent.style.transform = 'scale(0.9) translateY(-20px)';
+                    modalContent.style.opacity = '0';
+                    modalContent.style.transition = 'all 0.2s ease-in';
+                }
+                
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    
+                    // Restore background scrolling
+                    document.body.style.overflow = '';
+                }, 200);
+            }
+        }
+        
+        // Enhanced GM System with Beautiful TLBB UI
+        function activateGM() {
+            const passwordInput = document.getElementById('gm-password-input');
+            const gmButton = document.getElementById('gm-activate-btn');
+            
+            if (!passwordInput) return;
+            
+            const password = passwordInput.value;
+            
+            if (password === '0412') {
+                if (typeof playLevelComplete === 'function') playLevelComplete();
+                
+                // Success Visual Effects
+                passwordInput.style.border = '2px solid #00ff00';
+                passwordInput.style.boxShadow = '0 0 20px rgba(0, 255, 0, 0.5)';
+                gmButton.style.background = 'linear-gradient(135deg, #00ff00, #00cc00)';
+                gmButton.innerHTML = '✅ GM PANEL ACTIVATED!';
+                
+                // Show GM Panel
+                const gmPanel = document.getElementById('gm-panel');
+                if (gmPanel) {
+                    gmPanel.classList.add('active');
+                }
+                
+                // Set GM status
+                player.gm = true;
+                
+                // Show success notification
+                showFloatText('GM Panel Đã Kích Hoạt! 🎮', '#00ff00');
+                saveData();
+                
+                // Auto close settings after success
+                setTimeout(() => {
+                    closeSettings();
+                    // Reset UI
+                    passwordInput.style.border = '2px solid #666';
+                    passwordInput.style.boxShadow = 'none';
+                    passwordInput.value = '';
+                    gmButton.style.background = 'linear-gradient(135deg, #ff3333, #cc0000)';
+                    gmButton.innerHTML = '⚡ KÍCH HOẠT QUYỀN NĂNG';
+                }, 2000);
+                
+            } else if (password.length > 0) {
+                if (typeof playWrongSound === 'function') playWrongSound();
+                
+                // Error Visual Effects
+                passwordInput.style.border = '2px solid #ff0000';
+                passwordInput.style.boxShadow = '0 0 20px rgba(255, 0, 0, 0.5)';
+                passwordInput.style.background = 'rgba(255, 0, 0, 0.2)';
+                gmButton.style.background = 'linear-gradient(135deg, #ff0000, #990000)';
+                gmButton.innerHTML = '❌ MẬT KHẨU SAI!';
+                
+                showFloatText('Mật khẩu quản trị viên sai! ❌', '#ff0000');
+                
+                // Reset after error
+                setTimeout(() => {
+                    passwordInput.style.border = '2px solid #666';
+                    passwordInput.style.boxShadow = 'none';
+                    passwordInput.style.background = 'rgba(0, 0, 0, 0.6)';
+                    passwordInput.value = '';
+                    gmButton.style.background = 'linear-gradient(135deg, #ff3333, #cc0000)';
+                    gmButton.innerHTML = '⚡ KÍCH HOẠT QUYỀN NĂNG';
+                }, 2000);
+            }
+        }
+
+        // Enhanced Game Selector Functions with Beautiful Animations
+        function showGameSelector() {
+            if (typeof playWindowOpen === 'function') playWindowOpen();
+            const overlay = document.getElementById('game-selector-overlay');
+            const panel = overlay.querySelector('div');
+            
+            overlay.style.display = 'block';
+            overlay.style.opacity = '0';
+            
+            if (panel) {
+                panel.style.transform = 'translate(-50%, -50%) scale(0.8) rotateY(-15deg)';
+                panel.style.opacity = '0';
+            }
+            
+            // Animate in
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+                overlay.style.transition = 'opacity 0.4s ease-out';
+                
+                if (panel) {
+                    panel.style.transform = 'translate(-50%, -50%) scale(1) rotateY(0deg)';
+                    panel.style.opacity = '1';
+                    panel.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                }
+            }, 10);
+            
+            // Lock body scroll
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function hideGameSelector() {
+            if (typeof playWindowClose === 'function') playWindowClose();
+            const overlay = document.getElementById('game-selector-overlay');
+            const panel = overlay.querySelector('div');
+            
+            // Animate out
+            overlay.style.opacity = '0';
+            overlay.style.transition = 'opacity 0.3s ease-in';
+            
+            if (panel) {
+                panel.style.transform = 'translate(-50%, -50%) scale(0.8) rotateY(15deg)';
+                panel.style.opacity = '0';
+                panel.style.transition = 'all 0.4s cubic-bezier(0.55, 0.085, 0.68, 0.53)';
+            }
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                
+                // Restore body scroll
+                document.body.style.overflow = '';
+            }, 400);
+        }
+        
+        // GM Functions with Password Protection
+        function toggleGM() {
+            const password = prompt('🔒 Nhập mật khẩu GM:');
+            if (password === '0412') {
+                playWindowOpen();
+                alert('✅ GM Mode Activated! \n\n💰 +1000 StarDust\n❤️ Full HP\n🎮 All Levels Unlocked');
+                player.starDust += 1000;
+                player.maxHP = 999;
+                game.hp = player.maxHP;
+                player.level = 99;
+                updateHome();
+                updateHUD();
+                saveData();
+            } else if (password !== null) {
+                playSound('wrong-sound');
+                alert('❌ Mật khẩu sai!');
+            }
+        }
+        
+        // Audio System
+        function playSound(soundId) {
+            try {
+                const audio = document.getElementById(soundId);
+                if (audio) {
+                    audio.currentTime = 0;
+                    audio.play().catch(e => console.log('Audio play failed:', e));
+                }
+            } catch (e) {
+                console.log('Sound error:', e);
+            }
+        }
+        
+        // TLBB Enhanced Sound System with Volume Control
+        let musicVolume = 0.3;
+        let sfxVolume = 0.5;
+        
+        function playSound(id, volume = sfxVolume) {
+            try {
+                const audio = document.getElementById(id);
+                if (audio) {
+                    audio.currentTime = 0;
+                    audio.volume = volume;
+                    audio.play().catch(e => console.log('Audio play failed:', e));
+                }
+            } catch (e) {
+                console.log('Sound error:', e);
+            }
+        }
+        
+        // TLBB Enhanced Sound Functions
+        function playCorrectSound() { 
+            playSound('correct-sound'); 
+            playSound('skill-sound'); // Add skill sound for extra impact
+            playSound('money-sound'); // Money sound for reward
+        }
+        function playWrongSound() { playSound('wrong-sound'); }
+        function playButtonClick() { playSound('button-click'); }
+        function playWindowOpen() { playSound('window-open'); }
+        function playWindowClose() { playSound('window-close'); }
+        function playLevelComplete() { playSound('level-complete'); }
+        
+        // Background Music Control
+        function startBackgroundMusic() {
+            const music = document.getElementById('bg-music');
+            if (music && music.paused) {
+                music.volume = musicVolume;
+                music.play().catch(e => console.log('Music failed:', e));
+            }
+        }
+        
+        // Enhanced Volume Controls and Settings Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Music Volume Slider
+            const musicSlider = document.getElementById('music-volume-slider');
+            const musicPercent = document.getElementById('music-percent');
+            
+            if (musicSlider && musicPercent) {
+                musicSlider.addEventListener('input', function() {
+                    const value = this.value;
+                    musicVolume = value / 100;
+                    musicPercent.textContent = value + '%';
+                    
+                    // Update slider visual
+                    this.style.background = `linear-gradient(to right, var(--primary) 0%, var(--primary) ${value}%, #333 ${value}%, #333 100%)`;
+                    
+                    // Apply to music
+                    const music = document.getElementById('bg-music');
+                    if (music) music.volume = musicVolume;
+                    
+                    if (typeof playButtonClick === 'function') playButtonClick();
+                });
+            }
+            
+            // SFX Volume Slider
+            const sfxSlider = document.getElementById('sfx-volume-slider');
+            const sfxPercent = document.getElementById('sfx-percent');
+            
+            if (sfxSlider && sfxPercent) {
+                sfxSlider.addEventListener('input', function() {
+                    const value = this.value;
+                    sfxVolume = value / 100;
+                    sfxPercent.textContent = value + '%';
+                    
+                    // Update slider visual
+                    this.style.background = `linear-gradient(to right, var(--primary) 0%, var(--primary) ${value}%, #333 ${value}%, #333 100%)`;
+                    
+                    if (typeof playButtonClick === 'function') playButtonClick();
+                });
+            }
+            
+            // Math Config Toggle Buttons
+            document.querySelectorAll('.math-toggle').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const category = this.dataset.category;
+                    const value = this.dataset.value;
+                    toggleMathConfig(category, value, this);
+                });
+            });
+            
+            // Initialize math config UI
+            updateMathConfigUI();
+            
+            // Prevent scrolling when focusing on game input
+            const gameInput = document.getElementById('game-input');
+            if (gameInput) {
+                gameInput.addEventListener('focus', function() {
+                    // Prevent body scroll on mobile
+                    document.body.style.overflow = 'hidden';
+                    document.body.style.position = 'fixed';
+                    document.body.style.width = '100%';
+                    
+                    // Prevent viewport scrolling
+                    const viewport = document.querySelector('meta[name=viewport]');
+                    if (viewport) {
+                        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=no');
+                    }
+                });
+                
+                gameInput.addEventListener('blur', function() {
+                    // Restore body scroll
+                    document.body.style.overflow = '';
+                    document.body.style.position = '';
+                    document.body.style.width = '';
+                    
+                    // Restore viewport
+                    const viewport = document.querySelector('meta[name=viewport]');
+                    if (viewport) {
+                        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+                    }
+                });
+            }
+            
+            // GM Password Enter Key
+            const gmPasswordInput = document.getElementById('gm-password-input');
+            if (gmPasswordInput) {
+                gmPasswordInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        activateGM();
+                    }
+                });
+                
+                // Focus effects
+                gmPasswordInput.addEventListener('focus', function() {
+                    this.style.border = '2px solid var(--primary)';
+                    this.style.boxShadow = '0 0 15px rgba(0, 242, 255, 0.3)';
+                });
+                
+                gmPasswordInput.addEventListener('blur', function() {
+                    if (this.style.border !== '2px solid #ff0000' && this.style.border !== '2px solid #00ff00') {
+                        this.style.border = '2px solid #666';
+                        this.style.boxShadow = 'none';
+                    }
+                });
+            }
+        });
+        
+        // Auto-start background music on first interaction
+        document.addEventListener('click', function startMusic() {
+            startBackgroundMusic();
+            document.removeEventListener('click', startMusic);
+        }, { once: true });
+        
+
+        // Close menu with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideGameSelector();
+                closeSettings();
+            }
+        });
+        
+        // Override original sound functions
+        window.playCorrectSound = playCorrectSound;
+        window.playWrongSound = playWrongSound;
+    </script>
+</body>
+</html>
