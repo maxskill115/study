@@ -1158,3 +1158,16 @@ input[type="color"] {
     width: 100%;
     max-width: calc(780px * var(--font-scale));
 }
+/* ===== MOBILE ONLY: PRACTICE & EXAM RESPONSIVE ===== */
+@media (max-width: 767px) {
+    #practice-screen.active,
+    #exam-screen.active {
+        position: static;     /* bỏ absolute */
+        top: auto;
+        left: auto;
+        transform: none;      /* bỏ translate(-50%, -50%) */
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+}
