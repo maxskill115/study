@@ -1145,3 +1145,16 @@ input[type="color"] {
         margin-bottom: 15px;
     }
 }
+/* ===== FIX===== */
+/* ===== OLD STYLE CENTER BLOCK (LIKE BEFORE) ===== */
+
+#practice-screen.active,
+#exam-screen.active {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    width: 100%;
+    max-width: calc(780px * var(--font-scale));
+}
