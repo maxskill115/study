@@ -580,6 +580,8 @@
             z-index: 9999;
             display: none;
             backdrop-filter: blur(10px);
+            pointer-events: auto;
+            touch-action: auto;
         }
         .gm-password-panel {
             position: absolute;
@@ -614,6 +616,13 @@
             margin-bottom: 20px;
             outline: none;
             box-sizing: border-box;
+            /* Mobile keyboard fix */
+            pointer-events: auto;
+            touch-action: manipulation;
+            -webkit-user-select: text;
+            user-select: text;
+            -webkit-appearance: none;
+            appearance: none;
         }
         .gm-password-buttons {
             display: flex;
@@ -628,8 +637,27 @@
             font-weight: bold;
             font-size: 14px;
             transition: all 0.3s ease;
+            pointer-events: auto;
+            touch-action: manipulation;
         }
+        
+        /* Hold progress indicator for GM activation */
+        .gm-hold-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
+            width: 0%;
+            border-radius: 0 0 12px 12px;
+            transition: width 0.1s linear;
+        }
+        
         .gm-confirm-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        .gm-confirm-btn.gm-password-btn {
             background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 180, 0, 0.2));
             border: 2px solid var(--primary-gold);
             color: var(--primary-gold);
@@ -1247,7 +1275,7 @@
     <!-- START SCREEN -->
     <div id="start-screen" class="modal">
         <h1 id="main-title" style="font-family:'Ma Shan Zheng'; font-size:80px; color:gold; margin:0; text-align:center; white-space:nowrap;">Thiên Đạo Luân Hồi</h1>
-        <p style="color:#ccc; margin-top:10px;">Giai Đoạn 14: Tiên Nhân Thoát Tục</p>
+        <p style="color:#ccc; margin-top:10px;">16:52 Giai Đoạn 14: Tiên Nhân Thoát Tục</p>
         <button class="btn-start" id="start-game-btn">NHẬP THẾ</button>
     </div>
 
@@ -1320,9 +1348,12 @@
             <h2 class="gm-password-title">🔒 THIÊN ĐẠO BÍ MẬT</h2>
             <input type="password" id="gm-password-input" class="gm-password-input" placeholder="Nhập mật khẩu GM...">
             <div class="gm-password-buttons">
-                <button onclick="validateGMPassword()" class="gm-password-btn gm-confirm-btn">✅ XÁC NHẬN</button>
+                <button id="gm-confirm-btn" class="gm-password-btn gm-confirm-btn">✅ XÁC NHẬN
+                    <div id="gm-hold-progress" class="gm-hold-progress"></div>
+                </button>
                 <button onclick="hideGMLogin()" class="gm-password-btn gm-cancel-btn">❌ HỦY BỎ</button>
             </div>
+            <p style="color: #888; font-size: 11px; margin-top: 15px;">💡 Giữ nút XÁC NHẬN 5 giây để tự động kích hoạt GM</p>
         </div>
     </div>
 
@@ -3049,6 +3080,7 @@
     function hideGMLogin() {
         document.getElementById('gm-password-modal').style.display = 'none';
         document.getElementById('gm-password-input').value = '';
+        endGMHold(); // Reset hold progress when closing
     }
     
     function validateGMPassword() {
@@ -3069,13 +3101,86 @@
         }
     }
     
-    // Allow Enter key in password input
+    // GM Hold to Activate System (5 seconds)
+    let gmHoldTimer = null;
+    let gmHoldStartTime = null;
+    let gmHoldProgressInterval = null;
+    const GM_HOLD_DURATION = 5000; // 5 seconds
+    
+    function startGMHold() {
+        gmHoldStartTime = Date.now();
+        const progressBar = document.getElementById('gm-hold-progress');
+        
+        // Update progress bar every 50ms
+        gmHoldProgressInterval = setInterval(() => {
+            const elapsed = Date.now() - gmHoldStartTime;
+            const progress = Math.min((elapsed / GM_HOLD_DURATION) * 100, 100);
+            progressBar.style.width = progress + '%';
+        }, 50);
+        
+        // Trigger GM activation after 5 seconds
+        gmHoldTimer = setTimeout(() => {
+            clearInterval(gmHoldProgressInterval);
+            progressBar.style.width = '100%';
+            
+            // Flash effect
+            progressBar.style.background = '#00ff00';
+            setTimeout(() => {
+                hideGMLogin();
+                activateGMMode();
+                showGMNotification('⚡ GM kích hoạt qua giữ nút!', '🌟');
+            }, 200);
+        }, GM_HOLD_DURATION);
+    }
+    
+    function endGMHold() {
+        // Clear timers
+        if (gmHoldTimer) {
+            clearTimeout(gmHoldTimer);
+            gmHoldTimer = null;
+        }
+        if (gmHoldProgressInterval) {
+            clearInterval(gmHoldProgressInterval);
+            gmHoldProgressInterval = null;
+        }
+        
+        // Reset progress bar
+        const progressBar = document.getElementById('gm-hold-progress');
+        if (progressBar) {
+            progressBar.style.width = '0%';
+            progressBar.style.background = 'linear-gradient(90deg, #00ff00, #ffff00, #ff0000)';
+        }
+        
+        gmHoldStartTime = null;
+    }
+    
+    // Allow Enter key in password input and setup GM button events
     document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && document.getElementById('gm-password-modal').style.display === 'block') {
                 validateGMPassword();
             }
         });
+        
+        // Setup GM confirm button events (click + hold)
+        const gmConfirmBtn = document.getElementById('gm-confirm-btn');
+        if (gmConfirmBtn) {
+            // Click to validate password
+            gmConfirmBtn.addEventListener('click', validateGMPassword);
+            
+            // Mouse events for hold
+            gmConfirmBtn.addEventListener('mousedown', startGMHold);
+            gmConfirmBtn.addEventListener('mouseup', endGMHold);
+            gmConfirmBtn.addEventListener('mouseleave', endGMHold);
+            
+            // Touch events for mobile hold
+            gmConfirmBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startGMHold();
+            }, { passive: false });
+            gmConfirmBtn.addEventListener('touchend', endGMHold);
+            gmConfirmBtn.addEventListener('touchcancel', endGMHold);
+        }
     });
     
     function activateGMMode() {
@@ -3167,46 +3272,6 @@
         let tierIdx = Math.min(player.weapons.tier, SWORD_STYLES.length-1);
         document.getElementById('weapon-info').innerText = `${SWORD_STYLES[tierIdx].name} | ${player.weapons.count}/15`;
     }
-
-    // Enhanced GM system functions
-    function showGMLogin() {
-        document.getElementById('gm-password-modal').style.display = 'block';
-        setTimeout(() => {
-            document.getElementById('gm-password-input').focus();
-        }, 100);
-    }
-    
-    function hideGMLogin() {
-        document.getElementById('gm-password-modal').style.display = 'none';
-        document.getElementById('gm-password-input').value = '';
-    }
-    
-    function validateGMPassword() {
-        const password = document.getElementById('gm-password-input').value;
-        if (password === '0412') {
-            hideGMLogin();
-            activateGMMode();
-        } else {
-            // Wrong password effect
-            const input = document.getElementById('gm-password-input');
-            input.style.borderColor = '#ff3333';
-            input.style.animation = 'shake 0.5s ease-in-out';
-            setTimeout(() => {
-                input.style.borderColor = 'var(--primary-gold)';
-                input.style.animation = '';
-            }, 500);
-            showGMNotification('❌ Mật khẩu GM sai!', '🔒');
-        }
-    }
-    
-    // Allow Enter key in password input
-    document.addEventListener('DOMContentLoaded', () => {
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && document.getElementById('gm-password-modal').style.display === 'block') {
-                validateGMPassword();
-            }
-        });
-    });
 
     function gmPlayerLevelUp() { 
         if(player) {
