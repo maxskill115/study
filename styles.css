@@ -1146,7 +1146,7 @@ input[type="color"] {
     }
 }
 /* ===== FIX===== */
-/* ===== OLD STYLE CENTER BLOCK (LIKE BEFORE) ===== */
+/* ===== OLD STYLE CENTER BLOCK (LIKE BEFORE) khung luyện tập ở giữa - ok ===== */
 
 #practice-screen.active,
 #exam-screen.active {
@@ -1157,4 +1157,13 @@ input[type="color"] {
 
     width: 100%;
     max-width: calc(780px * var(--font-scale));
+}
+/* ===== FIX SAFARI FLEX-END CUT (ONLY 3 BLOCKS) ===== */
+
+.settings-group.exam-settings::after,
+.main-buttons::after,
+.toggle-settings-btn::after {
+    content: "";
+    display: block;
+    height: calc(20px * var(--font-scale));
 }
