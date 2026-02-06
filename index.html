@@ -2,22 +2,11 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Finger Math - Luyện Tính Nhẩm</title>
     <link rel="stylesheet" href="styles.css">
     
-    <!-- AUDIO SYSTEM -->
-    <audio id="correct-sound" preload="auto">
-        <source src="music/correct.mp3" type="audio/mpeg">
-        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQe" type="audio/wav">
-    </audio>
-    <audio id="wrong-sound" preload="auto">
-        <source src="music/wrong.mp3" type="audio/mpeg">
-        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQeBDuZ3fPGdiYGKH7M9N2QQAoUXrTp66hVFApGn+DyvmQe" type="audio/wav">
-    </audio>
-    <audio id="bg-music" preload="auto" loop>
-        <source src="music/nhacnen.mp3" type="audio/mpeg">
-    </audio>
+    <!-- Audio is managed by app.js -->
     
     <style>
         /* TLBB Enhanced Menu Animations */
@@ -572,33 +561,6 @@
                 document.body.style.overflow = '';
             }, 400);
         }
-        
-        // Simplified Audio System
-        function playSound(soundId) {
-            try {
-                const audio = document.getElementById(soundId);
-                if (audio) {
-                    audio.currentTime = 0;
-                    audio.play().catch(e => console.log('Audio play failed:', e));
-                }
-            } catch (e) {
-                console.log('Sound error:', e);
-            }
-        }
-        
-        // Start background music on first user interaction
-        let musicStarted = false;
-        document.addEventListener('click', function startMusic() {
-            if (!musicStarted) {
-                const music = document.getElementById('bg-music');
-                if (music && music.paused) {
-                    music.volume = 0.3;
-                    music.play().then(() => {
-                        musicStarted = true;
-                    }).catch(e => console.log('Music play failed:', e));
-                }
-            }
-        }, { once: true });
         
         // Close menu with Escape key
         document.addEventListener('keydown', function(e) {

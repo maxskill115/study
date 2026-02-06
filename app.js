@@ -105,22 +105,35 @@ const sounds = {
 sounds.bgMusic.loop = true;
 sounds.bgMusic.volume = 0.5; // 50% âm lượng
 
+// Preload tất cả âm thanh
+Object.values(sounds).forEach(audio => { audio.preload = 'auto'; });
+
+// Hàm phát âm thanh an toàn - dùng cloneNode để tránh bị đè
+function playSoundSafe(audio) {
+    try {
+        const clone = audio.cloneNode();
+        clone.volume = audio.volume || 1;
+        clone.play().catch(e => console.log('Audio play failed:', e));
+        // Tự dọn dẹp sau khi phát xong
+        clone.addEventListener('ended', () => { clone.remove(); });
+    } catch (e) {
+        console.log('Sound error:', e);
+    }
+}
+
 // Hàm phát âm thanh click
 function playClickSound() {
-    sounds.click.currentTime = 0;
-    sounds.click.play().catch(e => console.log('Audio play failed:', e));
+    playSoundSafe(sounds.click);
 }
 
 // Hàm phát âm thanh thành công
 function playSuccessSound() {
-    sounds.success.currentTime = 0;
-    sounds.success.play().catch(e => console.log('Audio play failed:', e));
+    playSoundSafe(sounds.success);
 }
 
 // Hàm phát âm thanh thất bại
 function playFailureSound() {
-    sounds.failure.currentTime = 0;
-    sounds.failure.play().catch(e => console.log('Audio play failed:', e));
+    playSoundSafe(sounds.failure);
 }
 
 // Cập nhật hiển thị âm lượng
