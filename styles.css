@@ -1159,17 +1159,16 @@ input[type="color"] {
     max-width: calc(780px * var(--font-scale));
 }
 /* ===== FIX SAFARI FLEX-END CUT (ONLY 3 BLOCKS) ===== */
-
-/* ===== REAL FIX – PULL UP LAST 3 BLOCKS (IOS SAFARI) ===== */
-
 .settings-group.exam-settings {
-    transform: translateY(-20px);
+    font-size: calc(1.15rem * var(--font-scale));
+    padding: calc(22px * var(--font-scale));
 }
 
 .main-buttons {
-    transform: translateY(-20px);
+    padding: calc(20px * var(--font-scale));
 }
 
 .toggle-settings-btn {
-    transform: translateY(-20px);
+    font-size: calc(1.15rem * var(--font-scale));
+    padding: calc(18px * var(--font-scale));
 }
