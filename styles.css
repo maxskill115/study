@@ -1158,17 +1158,3 @@ input[type="color"] {
     width: 100%;
     max-width: calc(780px * var(--font-scale));
 }
-/* ===== FIX SAFARI FLEX-END CUT (ONLY 3 BLOCKS) ===== */
-/* ===== MATCH UI DENSITY WITH .option-btn ===== */
-
-.settings-group.exam-settings,
-.main-buttons,
-.toggle-settings-btn {
-    padding: calc(14px * var(--font-scale)) calc(24px * var(--font-scale));
-    font-size: calc(1.2rem * var(--font-scale));
-    font-weight: 600;
-}
-.toggle-settings-btn {
-    border-width: 3px;
-    border-radius: 10px;
-}
